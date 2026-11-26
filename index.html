@@ -18,6 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="estilos.css">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Le Parfum","description":"Perfumes originales árabes, de diseñador y de nicho. Pedidos por WhatsApp y pago contra entrega.","areaServed":"MX","currenciesAccepted":"MXN","paymentAccepted":"Efectivo, transferencia"}</script>
 </head>
 <body class="tienda">
   <a class="saltar" href="#catalogo">Ir al catálogo</a>
@@ -42,9 +43,16 @@
         <h1 id="titulo-portada">Encuentra tu perfume por cómo huele</h1>
         <p id="lema" class="lema"></p>
         <p class="portada-ayuda">Toca una tira para ver los perfumes de esa familia. <span id="total-catalogo">500</span> perfumes, y todos se pueden pedir: si no lo tenemos, lo conseguimos.</p>
+        <button id="abrir-quiz" class="btn btn-borde quiz-boton">¿No sabes cuál elegir? Responde 3 preguntas</button>
       </div>
       <div id="tiras" class="tiras" aria-label="Familias de aroma"></div>
     </section>
+
+    <ul class="promesas" aria-label="Lo que te prometemos">
+      <li><b>Originales</b><span>Perfumes de la marca, nunca imitaciones</span></li>
+      <li><b>Pagas al recibir</b><span>En efectivo o por transferencia, cuando lo tienes en la mano</span></li>
+      <li><b>¿No está? Lo conseguimos</b><span>Pídelo aunque diga «por encargo» y te decimos el plazo</span></li>
+    </ul>
 
     <section id="catalogo" class="catalogo" aria-label="Catálogo">
       <nav id="categorias" class="pestanas" aria-label="Categorías"></nav>
@@ -92,7 +100,7 @@
           <div id="rejilla" class="rejilla"></div>
           <div id="vacio" class="vacio" hidden>
             <p>Ningún perfume coincide con esa búsqueda.</p>
-            <p>Prueba con otra palabra o quita algún filtro. Si buscas uno que no está, escríbenos y lo conseguimos.</p>
+            <p id="vacio-texto">Prueba con otra palabra o quita algún filtro. Si buscas uno que no está, escríbenos y lo conseguimos.</p>
             <button id="limpiar-vacio" class="btn btn-borde">Quitar filtros</button>
           </div>
           <button id="mas" class="btn btn-borde mas" hidden>Mostrar más</button>
@@ -180,6 +188,17 @@
       <h2 id="titulo-listo">¡Pedido recibido!</h2>
       <p id="texto-listo"></p>
       <a id="whatsapp-listo" class="btn btn-whatsapp ancho" target="_blank" rel="noopener" hidden>Enviar mi pedido por WhatsApp</a>
+    </div>
+  </div>
+
+  <!-- ¿Qué perfume me va? -->
+  <div id="capa-quiz" class="capa" hidden>
+    <div class="panel panel-form quiz" role="dialog" aria-modal="true" aria-labelledby="titulo-quiz">
+      <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+      <p id="quiz-paso" class="quiz-paso"></p>
+      <h2 id="titulo-quiz"></h2>
+      <div id="quiz-opciones" class="quiz-opciones"></div>
+      <button id="quiz-atras" class="enlace" hidden>Volver a la pregunta anterior</button>
     </div>
   </div>
 

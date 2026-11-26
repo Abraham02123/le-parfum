@@ -13,14 +13,20 @@
     Especiada: '#A8553C', 'Ámbar': '#B97A2B', 'Acuática': '#6AA3C4', Oud: '#5A3A2E' };
   const PARA = { mujer: 'Para ella', hombre: 'Para él', unisex: 'Para todos' };
   const CATEGORIAS = [['todos', 'Todos'], ['mujer', 'Mujer'], ['hombre', 'Hombre'], ['unisex', 'Unisex'],
-    ['arabe', 'Árabes'], ['disenador', 'Diseñador'], ['nicho', 'Nicho'], ['ofertas', 'Ofertas']];
+    ['arabe', 'Árabes'], ['disenador', 'Diseñador'], ['nicho', 'Nicho'], ['ofertas', 'Ofertas'], ['favoritos', '♥ Guardados']];
 
   let catalogo = [], visibles = POR_PAGINA;
   const f = { q: '', categoria: 'todos', marcas: [], familias: [], concentraciones: [], tamanos: [], min: '', max: '', soloDisponibles: false, orden: 'destacados' };
   let carrito = [];
   try { carrito = JSON.parse(localStorage.getItem('tienda_carrito') || '[]'); } catch { carrito = []; }
+  // Favoritos: el visitante marca con ♥ los que le gustan y los vuelve a encontrar en la pestaña «Guardados»,
+  // aunque cierre la página (se guardan en su propio navegador, no en ningún servidor).
+  let favs;
+  try { favs = new Set(JSON.parse(localStorage.getItem('tienda_favoritos') || '[]').map(String)); } catch { favs = new Set(); }
 
   const nombreCompleto = (p) => `${p.marca} ${p.nombre}`;
+  const corazon = (p) => `<button class="fav" data-fav="${p.id}" aria-pressed="${favs.has(String(p.id))}" aria-label="Guardar ${esc(nombreCompleto(p))} en favoritos">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>`;
   const waLink = (texto) => `https://wa.me/${WA}?text=${encodeURIComponent(texto)}`;
 
   // ── Imagen o frasco dibujado si todavía no hay foto ─────────────────────
@@ -53,9 +59,22 @@
     casillas('#f-familias', 'familias', 'familia', unicos('familia').sort());
     casillas('#f-concentraciones', 'concentraciones', 'concentracion', unicos('concentracion').sort());
     casillas('#f-tamanos', 'tamanos', 'ml', unicos('ml').sort((a, b) => a - b), (v) => v + ' ml');
-    const hay = (c) => c === 'todos' || catalogo.some((p) => p.genero === c || p.tipo === c || (c === 'ofertas' && p.precio_antes > p.precio));
+    armarPestanas();
+  }
+  function armarPestanas() {
+    const hay = (c) => c === 'todos' || c === f.categoria || (c === 'favoritos' ? favs.size > 0
+      : catalogo.some((p) => p.genero === c || p.tipo === c || (c === 'ofertas' && p.precio_antes > p.precio)));
     $('#categorias').innerHTML = CATEGORIAS.filter(([v]) => hay(v)).map(([v, t]) =>
-      `<button class="pestana${v === f.categoria ? ' activa' : ''}" data-cat="${v}" aria-pressed="${v === f.categoria}">${t}</button>`).join('');
+      `<button class="pestana${v === f.categoria ? ' activa' : ''}" data-cat="${v}" aria-pressed="${v === f.categoria}">${t}${v === 'favoritos' ? ` (${favs.size})` : ''}</button>`).join('');
+  }
+  function alternarFav(id) {
+    id = String(id);
+    if (favs.has(id)) { favs.delete(id); aviso('Quitado de tus guardados'); } else { favs.add(id); aviso('Guardado: lo encuentras en la pestaña ♥ Guardados'); }
+    try { localStorage.setItem('tienda_favoritos', JSON.stringify([...favs])); } catch { /* sin espacio: siguen en memoria */ }
+    $$(`[data-fav="${id}"]`).forEach((b) => b.setAttribute('aria-pressed', favs.has(id)));
+    if (f.categoria === 'favoritos' && !favs.size) f.categoria = 'todos';
+    armarPestanas();
+    if (f.categoria === 'favoritos' || f.categoria === 'todos') pintar();
   }
 
   function activos() {
@@ -73,7 +92,7 @@
   function tarjeta(p) {
     const d = L.disponibilidad(p);
     const oferta = p.precio_antes > p.precio;
-    return `<article class="tarjeta" data-id="${p.id}">
+    return `<article class="tarjeta" data-id="${p.id}">${corazon(p)}
       <button class="foto" data-ver="${p.id}" aria-label="Ver ${esc(nombreCompleto(p))}">${imagen(p)}
         ${oferta ? `<span class="sello">Oferta</span>` : ''}</button>
       <div class="datos-tarjeta">
@@ -89,7 +108,9 @@
   }
 
   function pintar() {
-    const lista = L.filtrar(catalogo, f);
+    const lista = f.categoria === 'favoritos'
+      ? L.filtrar(catalogo, { ...f, categoria: 'todos' }).filter((p) => favs.has(String(p.id)))
+      : L.filtrar(catalogo, f);
     $('#conteo').textContent = `${lista.length} ${lista.length === 1 ? 'perfume' : 'perfumes'}`;
     $('#ver-resultados').textContent = `Ver ${lista.length} ${lista.length === 1 ? 'perfume' : 'perfumes'}`;
     $('#rejilla').innerHTML = lista.slice(0, visibles).map(tarjeta).join('');
@@ -97,6 +118,9 @@
     $('#mas').hidden = quedan <= 0;
     $('#mas').textContent = `Mostrar más (${quedan > 0 ? quedan : 0} restantes)`;
     $('#vacio').hidden = lista.length > 0;
+    $('#vacio-texto').textContent = f.categoria === 'favoritos'
+      ? 'Ninguno de tus guardados coincide con estos filtros.'
+      : 'Prueba con otra palabra o quita algún filtro. Si buscas uno que no está, escríbenos y lo conseguimos.';
     $$('.pestana').forEach((b) => { const a = b.dataset.cat === f.categoria; b.classList.toggle('activa', a); b.setAttribute('aria-pressed', a); });
     $$('.tira').forEach((b) => { const a = f.familias.includes(b.dataset.familia); b.classList.toggle('activa', a); b.setAttribute('aria-pressed', a); });
     activos();
@@ -113,7 +137,7 @@
       .sort(L.ORDENES.populares).slice(0, 4);
     const detalles = [p.concentracion, p.ml && p.ml + ' ml', PARA[p.genero], p.anio && `Lanzado en ${p.anio}`].filter(Boolean);
     $('#ficha-contenido').innerHTML = `
-      <div class="ficha-foto">${imagen(p, true)}</div>
+      <div class="ficha-foto">${imagen(p, true)}${corazon(p)}</div>
       <div class="ficha-texto">
         <p class="f-marca">${esc(p.marca)}</p>
         <h2 id="ficha-titulo">${esc(p.nombre)}</h2>
@@ -206,6 +230,53 @@
     } finally { btn.disabled = false; }
   }
 
+  // ── «¿Qué perfume me va?»: tres preguntas que se traducen a los mismos filtros del catálogo ─────
+  // No inventa nada: cada respuesta pone un filtro que el visitante después ve (y puede quitar) en el catálogo.
+  const OLORES = [
+    ['Flores', 'Rosa, jazmín, flor de azahar', ['Floral']],
+    ['Dulce', 'Vainilla, caramelo, chocolate', ['Dulce']],
+    ['Fresco y limpio', 'Como recién bañado: limón, lavanda, menta', ['Cítrica', 'Aromática', 'Fresca']],
+    ['Cálido, para la noche', 'Ámbar, especias, incienso', ['Oriental']],
+    ['Madera y cuero', 'Sándalo, cedro, cuero, oud', ['Amaderada', 'Cuero y oud']],
+    ['Frutal', 'Durazno, frutos rojos, piña', ['Frutal']],
+  ];
+  const PRESUPUESTOS = [['Hasta $1,999', '', 1999], ['De $2,000 a $3,000', 2000, 3000], ['Más de $3,000', 3000, ''], ['Me da igual', '', '']];
+  const quiz = { paso: 0, categoria: 'todos', familias: [], min: '', max: '' };
+  function pintarQuiz() {
+    const familiasHay = new Set(catalogo.map((p) => p.familia));
+    const pasos = [
+      ['¿Para quién es?', [['Para ella', 'mujer'], ['Para él', 'hombre'], ['Me da igual', 'todos']].map(([t, v]) =>
+        `<button class="opcion-quiz" data-q="categoria" data-v="${v}">${t}</button>`)],
+      ['¿Qué olor te gusta más?', OLORES.map(([t, d, fs], i) => fs.some((x) => familiasHay.has(x))
+        ? `<button class="opcion-quiz" data-q="olor" data-v="${i}"><b>${t}</b><small>${d}</small></button>` : '')],
+      ['¿Cuánto quieres gastar?', PRESUPUESTOS.map(([t], i) => `<button class="opcion-quiz" data-q="precio" data-v="${i}">${t}</button>`)],
+    ];
+    const [titulo, opciones] = pasos[quiz.paso];
+    $('#quiz-paso').textContent = `Pregunta ${quiz.paso + 1} de ${pasos.length}`;
+    $('#titulo-quiz').textContent = titulo;
+    $('#quiz-opciones').innerHTML = opciones.join('');
+    $('#quiz-atras').hidden = quiz.paso === 0;
+  }
+  function responderQuiz(q, v) {
+    if (q === 'categoria') quiz.categoria = v;
+    if (q === 'olor') quiz.familias = OLORES[+v][2];
+    if (q === 'precio') [, quiz.min, quiz.max] = PRESUPUESTOS[+v];
+    if (quiz.paso < 2) { quiz.paso += 1; pintarQuiz(); return; }
+    // Se aplica como filtros normales, para que el visitante vea por qué salen esos y pueda cambiarlos.
+    const familias = quiz.familias.filter((x) => catalogo.some((p) => p.familia === x));
+    Object.assign(f, { q: '', categoria: quiz.categoria, marcas: [], familias, concentraciones: [], tamanos: [],
+      min: String(quiz.min), max: String(quiz.max), soloDisponibles: false, orden: 'populares' });
+    let n = L.filtrar(catalogo, f).length, relajado = false;
+    if (!n && (f.min || f.max)) { f.min = f.max = ''; n = L.filtrar(catalogo, f).length; relajado = true; }
+    $('#buscar').value = ''; $('#orden').value = 'populares'; $('#solo-disponibles').checked = false;
+    $('#precio-min').value = f.min; $('#precio-max').value = f.max;
+    $$('#filtros input[type=checkbox][data-campo]').forEach((i) => (i.checked = i.dataset.campo === 'familias' && familias.includes(i.value)));
+    cerrar('#capa-quiz'); repintar();
+    $('#catalogo').scrollIntoView({ behavior: 'smooth' });
+    aviso(relajado ? `En ese precio no hay ninguno: te muestro los ${n} de ese olor, los más populares primero`
+      : `${n} perfumes van contigo, los más populares primero`);
+  }
+
   // ── Ventanas ────────────────────────────────────────────────────────────
   let antesDeAbrir = null;
   function abrir(sel) {
@@ -270,6 +341,8 @@
 
     // Clics dentro del catálogo, la ficha y el carrito (un solo escuchador por zona).
     document.addEventListener('click', (e) => {
+      const fav = e.target.closest('[data-fav]');
+      if (fav) { alternarFav(fav.dataset.fav); return; }
       const ver = e.target.closest('[data-ver]'), ag = e.target.closest('[data-agregar]'), comp = e.target.closest('[data-compartir]');
       if (ag) { agregar(ag.dataset.agregar); return; }
       if (ver) { abrirFicha(ver.dataset.ver); return; }
@@ -287,6 +360,9 @@
       carrito = carrito.filter((x) => x.cantidad > 0); guardarCarrito(); pintarCarrito();
     });
     $('#abrir-carrito').addEventListener('click', () => abrir('#capa-carrito'));
+    $('#abrir-quiz').addEventListener('click', () => { quiz.paso = 0; pintarQuiz(); abrir('#capa-quiz'); });
+    $('#quiz-opciones').addEventListener('click', (e) => { const b = e.target.closest('[data-q]'); if (b) responderQuiz(b.dataset.q, b.dataset.v); });
+    $('#quiz-atras').addEventListener('click', () => { quiz.paso = Math.max(0, quiz.paso - 1); pintarQuiz(); });
     $('#ir-pagar').addEventListener('click', () => { cerrar('#capa-carrito'); abrir('#capa-pedido'); });
     $('#form-pedido').addEventListener('submit', confirmar);
     $('#whatsapp-listo').addEventListener('click', () => {

@@ -4,9 +4,22 @@ Cada paso dice **qué haces tú**, **qué hago yo (Claude)**, **cuánto tarda** 
 Los pasos 1 a 3 son los únicos necesarios para que cualquier persona pueda ver el catálogo y pedirte.
 Hoy la tienda ya está hecha y probada: 500 perfumes con foto, 40 comprobaciones automáticas en verde.
 
+## Dónde vamos (26-nov)
+
+| paso | estado |
+|---|---|
+| 1 · datos | ✅ nombre **Le Parfum**, México, pesos mexicanos (precios ×19,64 pesos por dólar, redondeados a …99). ⏳ **faltan el WhatsApp y la transferencia** |
+| 2 · GitHub | ✅ publicada en **https://abraham02123.github.io/le-parfum/** (cuenta Abraham02123) |
+| 3 · prueba desde el móvil | ⏳ cuando esté el WhatsApp (sin él, la página dice «Modo de prueba» y los pedidos no te llegan) |
+| quitar tu nombre del enlace | ⏳ tú eliges: ver «Paso 6» |
+| mejoras de diseño | ✅ 26-nov: favoritos ♥, prueba «¿No sabes cuál elegir?», franja de promesas, imagen para compartir con el nombre |
+
+Para cambiar algo después: lo editas (o me lo pides) en `D:\tienda-perfumes` y se corre `bash publicar.sh`
+(1-2 minutos y la página se actualiza sola).
+
 ---
 
-## Paso 1 · Tus datos de la tienda — 5 minutos tuyos
+## Paso 1 · Tus datos de la tienda — 5 minutos tuyos (hecho en parte)
 
 **Qué haces tú:** mandarme UN mensaje con esto (copia y rellena):
 
@@ -108,10 +121,19 @@ aparece en tu panel y que la existencia bajó, y lo cancelo para dejarla como es
 
 ---
 
-## Paso 6 (opcional) · Dirección propia — 10 minutos tuyos y ~10-15 USD al año
+## Paso 6 (opcional) · Quitar tu nombre del enlace
 
-Por ejemplo `www.maisonparfum.com` en vez de `usuario.github.io/tienda-perfumes`. Es lo único que cuesta
-dinero y no hace falta para vender. Si lo quieres, dime y te guío.
+Hoy el enlace es `abraham02123.github.io/le-parfum`: GitHub siempre pone delante el nombre de la cuenta.
+Tres formas de quitarlo:
+
+| forma | enlace | cuesta | qué haces tú | qué hago yo |
+|---|---|---|---|---|
+| A · organización de GitHub | `leparfum-mx.github.io` | 0 | crear una «organización» gratis en github.com/organizations/plan (2 min, con tu misma cuenta) y decirme el nombre que elegiste | muevo la página ahí y compruebo que abre (5 min) |
+| B · Cloudflare Pages | `leparfum.pages.dev` | 0 | crear cuenta en Cloudflare y darme permiso para instalar su herramienta y abrir sesión | publico ahí y dejo el enlace viejo redirigiendo (10 min) |
+| C · dominio propio | `leparfum.mx` o `.com.mx` | ~300-700 pesos al año (estimación, sin comprobar precio de hoy) | comprarlo (te guío) | lo conecto (15 min + hasta 24 h que tarda en verse) |
+
+Lo que el cliente ve en A sigue diciendo «github.io»; en B dice «pages.dev»; solo C queda como una tienda
+con dirección propia.
 
 ---
 
