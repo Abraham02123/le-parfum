@@ -70,6 +70,12 @@ PRECIO_MARCA = {
 def tipo_de(x):
     return 'arabe' if x['arabe'] else 'nicho' if x['marca_slug'] in NICHO else 'disenador'
 
+# Tienda en México (26-nov): precio de referencia en dólares × tipo de cambio, redondeado como tienda
+# (hacia arriba al siguiente cien, menos 1: 2.199 y no 2.200,05). Tipo de cambio de open.er-api.com, 26-nov-2026.
+TIPO_CAMBIO = 19.64          # pesos mexicanos por dólar
+def a_pesos(usd):
+    return -(-usd * TIPO_CAMBIO // 100) * 100 - 1
+
 def precio_de(x, t):
     m = x['marca_slug']
     if m in PRECIO_MARCA: return PRECIO_MARCA[m]
@@ -119,7 +125,7 @@ for orden, x in enumerate(sel):
     foto = RAIZ / 'img' / f"{x['fid']}.webp"
     if not foto.exists(): sin_foto.append(x['fid'])
     p = {'id': x['fid'], 'nombre': nm['nombre'], 'marca': nm['marca'], 'genero': x['genero'], 'tipo': t, 'familia': fam,
-         'concentracion': concentracion_de(nm['nombre']), 'ml': None, 'precio': precio_de(x, t), 'precio_antes': None, 'stock': 0,
+         'concentracion': concentracion_de(nm['nombre']), 'ml': None, 'precio': int(a_pesos(precio_de(x, t))), 'precio_antes': None, 'stock': 0,
          'notas_salida': ', '.join(lista_es(x['salida'])) or None, 'notas_corazon': ', '.join(lista_es(x['corazon'])) or None,
          'notas_fondo': ', '.join(lista_es(x['fondo'])) or None,
          'acordes': [cap(tr(a)) for a in x['acordes']], 'votos': x['votos'], 'anio': x['anio'],
@@ -158,5 +164,5 @@ print('familias:', dict(Counter(p['familia'] for p in salida)))
 print('tipos:', dict(Counter(p['tipo'] for p in salida)), '· géneros:', dict(Counter(p['genero'] for p in salida)))
 print('precios:', dict(sorted(Counter(p['precio'] for p in salida).items())))
 print('concentración:', dict(Counter(p['concentracion'] for p in salida)))
-print('marcas a 95 por defecto:', sorted({x['marca_slug'] for x, p in zip(sel, salida) if p['precio'] == 95}))
+print('marcas a 95 por defecto:', sorted({x['marca_slug'] for x, p in zip(sel, salida) if p['precio'] == a_pesos(95)}))
 print('versión:', ver)

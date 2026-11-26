@@ -2,10 +2,10 @@
 //  CONFIGURACIÓN DE LA TIENDA — lo único que hay que tocar para personalizarla.
 // ─────────────────────────────────────────────────────────────────────────────
 window.TIENDA_CONFIG = {
-  nombre: 'Maison Parfum',                       // nombre de tu tienda
+  nombre: 'Le Parfum',                           // nombre de tu tienda
   lema: 'Fragancias originales · Árabes, de diseñador y de nicho',
-  moneda: 'USD',                                 // COP, MXN, PEN, CLP, ARS, USD, EUR…
-  idioma: 'es',                                  // es-CO, es-MX… cambia el formato del precio
+  moneda: 'MXN',                                 // COP, MXN, PEN, CLP, ARS, USD, EUR…
+  idioma: 'es-MX',                               // es-CO, es-MX… cambia el formato del precio
 
   // Número de WhatsApp donde recibes los pedidos: código de país + número, sin «+» ni espacios.
   // Ejemplo Colombia: '573001234567'. Vacío = no se muestra el botón de WhatsApp.

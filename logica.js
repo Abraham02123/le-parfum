@@ -80,7 +80,7 @@
   }
 
   function dinero(n, cfg) {
-    const sinDec = ['COP', 'CLP', 'PYG', 'ARS'].includes(cfg.moneda);
+    const sinDec = ['COP', 'CLP', 'PYG', 'ARS', 'MXN'].includes(cfg.moneda);
     return new Intl.NumberFormat(cfg.idioma || 'es', { style: 'currency', currency: cfg.moneda || 'USD',
       maximumFractionDigits: sinDec ? 0 : 2, minimumFractionDigits: sinDec ? 0 : 2 }).format(n);
   }
