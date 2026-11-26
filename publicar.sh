@@ -28,6 +28,13 @@ grep -q 'og:url' index.html || sed -i "s#<meta property=\"og:type\" content=\"we
 git config user.name >/dev/null || git config user.name "Tienda de perfumes"
 git config user.email >/dev/null || git config user.email "tienda@localhost"
 
+# Subir con la sesión de `gh`, no con el gestor de contraseñas de Windows: ese abre una ventana y el guion
+# se queda esperando sin decir nada (pasó el 26-nov, 7 minutos colgado). Solo afecta a esta carpeta.
+if [ "$(git config --local --get-all credential.https://github.com.helper | tail -1)" != '!gh auth git-credential' ]; then
+  git config --local --replace-all credential.https://github.com.helper ""
+  git config --local --add credential.https://github.com.helper '!gh auth git-credential'
+fi
+
 git add -A
 git diff --cached --quiet || git commit -q -m "Publicar tienda $(date '+%Y-%m-%d %H:%M')"
 
