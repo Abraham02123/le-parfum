@@ -52,8 +52,14 @@ else
 fi
 
 echo "Esperando a que GitHub publique (suele tardar 1-2 minutos)…"
+# «Responde 200» no basta: la versión vieja también responde. Se espera a que GitHub diga que construyó
+# EXACTAMENTE el último commit subido (26-nov).
+ULTIMO=$(git rev-parse HEAD)
 for i in $(seq 1 30); do
-  if curl -s -o /dev/null -w '%{http_code}' "$URL" | grep -q 200; then echo "✅ Publicada: $URL"; exit 0; fi
+  BUILD=$(gh api "repos/${DUENO}/${REPO}/pages/builds/latest" --jq '.commit + " " + .status' 2>/dev/null || true)
+  if [ "$BUILD" = "$ULTIMO built" ] && curl -s -o /dev/null -w '%{http_code}' "$URL" | grep -q 200; then
+    echo "✅ Publicada la versión ${ULTIMO:0:7}: $URL"; exit 0
+  fi
   sleep 10
 done
 echo "⏳ Todavía no responde. Mira el estado en: https://github.com/${DUENO}/${REPO}/actions  — la dirección será $URL"
