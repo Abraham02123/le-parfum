@@ -9,7 +9,7 @@ window.TIENDA_CONFIG = {
 
   // Número de WhatsApp donde recibes los pedidos: código de país + número, sin «+» ni espacios.
   // Ejemplo Colombia: '573001234567'. Vacío = no se muestra el botón de WhatsApp.
-  whatsapp: '',
+  whatsapp: '528135905000',                        // 52 81 3590 5000 (26-nov)
 
   // Base de datos en la nube (Supabase, plan gratis). VACÍO = MODO DEMOSTRACIÓN:
   // todo se guarda solo en el navegador donde abres la página (sirve para probar, no para vender).

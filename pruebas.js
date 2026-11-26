@@ -3,7 +3,13 @@ const fs = require('fs'), vm = require('vm'), assert = require('assert');
 const mem = {};
 globalThis.window = globalThis;
 globalThis.localStorage = { getItem: (k) => (k in mem ? mem[k] : null), setItem: (k, v) => (mem[k] = String(v)), removeItem: (k) => delete mem[k] };
-for (const f of ['config.js', 'logica.js', 'demo-catalogo.js', 'datos.js']) vm.runInThisContext(fs.readFileSync(__dirname + '/' + f, 'utf8'), { filename: f });
+vm.runInThisContext(fs.readFileSync(__dirname + '/config.js', 'utf8'), { filename: 'config.js' });
+// El número real de la tienda: código de México (52) + 10 dígitos, que es lo que pide wa.me.
+const NUM_REAL = String(globalThis.TIENDA_CONFIG.whatsapp || '').replace(/\D/g, '');
+assert.ok(NUM_REAL === '' || /^52\d{10}$/.test(NUM_REAL), 'el WhatsApp de config.js debe ser 52 + 10 dígitos: ' + NUM_REAL);
+// Las pruebas de abajo empiezan en modo demostración (sin número ni base de datos), sea cual sea config.js.
+globalThis.TIENDA_CONFIG = Object.assign({}, globalThis.TIENDA_CONFIG, { whatsapp: '', supabaseUrl: '', supabaseKey: '' });
+for (const f of ['logica.js', 'demo-catalogo.js', 'datos.js']) vm.runInThisContext(fs.readFileSync(__dirname + '/' + f, 'utf8'), { filename: f });
 const { Logica: L, Datos: D } = globalThis;
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
 
