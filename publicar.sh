@@ -11,7 +11,7 @@ if ! gh auth status >/dev/null 2>&1; then
   echo "🔴 Falta entrar a GitHub. Escribe:  gh auth login   (elige GitHub.com → HTTPS → Login with a web browser)"; exit 1
 fi
 DUENO=$(gh api user --jq .login)
-URL="https://${DUENO}.github.io/${REPO}/"
+URL="https://${DUENO,,}.github.io/${REPO}/"   # en minúsculas: es la dirección que se comparte (26-nov)
 
 # Sin número de WhatsApp la tienda sale en «modo de prueba» (los pedidos no te llegan): avisar, no impedir.
 if ! grep -Eq "whatsapp: *'[^']*[0-9]" config.js; then
