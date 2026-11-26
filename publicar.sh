@@ -24,8 +24,16 @@ node pruebas.js            # si una comprobación falla, no se publica nada
 sed -i -E "s#<meta property=\"og:image\" content=\"[^\"]*\">#<meta property=\"og:image\" content=\"${URL}img/compartir.jpg\">#" index.html
 grep -q 'og:url' index.html || sed -i "s#<meta property=\"og:type\" content=\"website\">#&\n  <meta property=\"og:url\" content=\"${URL}\">#" index.html
 
+# El repositorio es público: ningún commit puede llevar un correo personal (cualquiera lo leería en GitHub).
+git config user.name >/dev/null || git config user.name "Tienda de perfumes"
+git config user.email >/dev/null || git config user.email "tienda@localhost"
+
 git add -A
 git diff --cached --quiet || git commit -q -m "Publicar tienda $(date '+%Y-%m-%d %H:%M')"
+
+if git log --format='%ae%n%ce' | grep -Eqv '(@localhost|noreply)'; then
+  echo "🔴 Hay un commit firmado con un correo personal; no se publica para no exponerlo. Pídele a Claude que lo cambie."; exit 1
+fi
 
 if ! git remote get-url origin >/dev/null 2>&1; then
   gh repo create "$REPO" --public --source . --remote origin --push \
