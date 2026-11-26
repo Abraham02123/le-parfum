@@ -97,7 +97,7 @@
         ${oferta ? `<span class="sello">Oferta</span>` : ''}</button>
       <div class="datos-tarjeta">
         <p class="t-marca">${esc(p.marca)}</p>
-        <h3><button class="enlace-ficha" data-ver="${p.id}">${esc(p.nombre)}</button></h3>
+        <h3><a class="enlace-ficha" href="p/${p.id}.html" data-ver="${p.id}">${esc(p.nombre)}</a></h3>
         <p class="t-familia">${p.familia ? `<i style="--tono:${TONOS[p.familia] || '#B97A2B'}"></i>${esc(p.familia)}` : ''}</p>
         <div class="t-pie">
           <p class="precio">${dinero(p.precio)}${oferta ? ` <s>${dinero(p.precio_antes)}</s>` : ''}</p>
@@ -160,7 +160,22 @@
     abrir('#capa-ficha');
     $('#capa-ficha .panel').scrollTop = 0;
     history.replaceState(null, '', '#p=' + p.id);
+    recordarVisto(p.id);
     document.title = `${nombreCompleto(p)} | ${C.nombre}`;
+  }
+
+  // ── Vistos hace poco: los últimos 8 perfumes abiertos, guardados en este navegador ─────
+  let vistos; try { vistos = JSON.parse(localStorage.getItem('tienda_vistos') || '[]').map(String); } catch { vistos = []; }
+  function recordarVisto(id) {
+    vistos = [String(id), ...vistos.filter((x) => x !== String(id))].slice(0, 8);
+    try { localStorage.setItem('tienda_vistos', JSON.stringify(vistos)); } catch { /* sin espacio: se pierde solo esta lista */ }
+    pintarVistos();
+  }
+  function pintarVistos() {
+    const lista = vistos.map((id) => catalogo.find((x) => String(x.id) === id)).filter(Boolean);
+    $('#vistos').hidden = lista.length === 0;
+    $('#fila-vistos').innerHTML = lista.map((x) =>
+      `<button class="mini" data-ver="${x.id}">${imagen(x)}<span class="mini-marca">${esc(x.marca)}</span><span class="mini-nombre">${esc(x.nombre)}</span></button>`).join('');
   }
 
   // ── Carrito ─────────────────────────────────────────────────────────────
@@ -345,9 +360,12 @@
       if (fav) { alternarFav(fav.dataset.fav); return; }
       const ver = e.target.closest('[data-ver]'), ag = e.target.closest('[data-agregar]'), comp = e.target.closest('[data-compartir]');
       if (ag) { agregar(ag.dataset.agregar); return; }
-      if (ver) { abrirFicha(ver.dataset.ver); return; }
+      // El nombre es un enlace a la página propia del perfume (para Google y para abrir en otra pestaña);
+      // un clic normal abre la ficha aquí mismo, sin salir de la tienda.
+      if (ver) { if (ver.tagName === 'A' && (e.ctrlKey || e.metaKey || e.shiftKey)) return; e.preventDefault(); abrirFicha(ver.dataset.ver); return; }
+      if (e.target.closest('[data-abrir-quiz]')) { $('#abrir-quiz').click(); return; }
       if (comp) {
-        const url = location.origin + location.pathname + '#p=' + comp.dataset.compartir;
+        const url = new URL('p/' + comp.dataset.compartir + '.html', location.href).href;
         (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => aviso('Enlace copiado'), () => prompt('Copia este enlace:', url));
       }
       const capa = e.target.closest('.capa');
@@ -391,11 +409,12 @@
     if (C.transferencia) { $('#opcion-transferencia').hidden = false; $('#texto-transferencia').textContent = C.transferencia; }
     if (C.pagoEnLinea) { $('#opcion-en-linea').classList.remove('deshabilitada'); $('#opcion-en-linea input').disabled = false; }
     $('#pie-precios').hidden = !C.preciosReferencia;
+    $('#faq-precios').hidden = !C.preciosReferencia;
     eventos();
     try { catalogo = await D.perfumes(); }
     catch (err) { $('#rejilla').innerHTML = `<p class="error">No se pudo cargar el catálogo (${esc(err.message)}). Recarga la página en un momento.</p>`; return; }
     $('#total-catalogo').textContent = catalogo.length;
-    armarTiras(); armarFiltros(); pintar(); pintarCarrito();
+    armarTiras(); armarFiltros(); pintar(); pintarCarrito(); pintarVistos();
     const m = location.hash.match(/^#p=(\d+)/); if (m) abrirFicha(m[1]);
   }
   iniciar();

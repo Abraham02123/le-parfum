@@ -1,0 +1,25 @@
+/* Páginas fijas de cada perfume y marca (las genera generar_paginas.js). Reusa estilos.css; aquí solo lo propio. */
+.pagina-fija .cabecera { display: flex; justify-content: space-between; align-items: center; }
+.pagina-fija .volver { min-height: 40px; }
+.producto { max-width: 1100px; margin: 0 auto; padding: 18px max(4vw, 16px) 48px; }
+.migas { font-size: 14px; color: var(--suave); margin-bottom: 22px; }
+.migas a { color: inherit; }
+.producto-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 48px; align-items: start; }
+.producto-foto { background: var(--blanco); border-radius: var(--r); padding: 24px; position: sticky; top: 90px; }
+.producto-foto img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: contain; display: block; }
+.producto h1 { font: 400 clamp(32px, 4vw, 48px)/1.05 var(--serif); margin: 4px 0 14px; }
+.producto h2 { font: 400 20px var(--serif); margin: 0 0 12px; }
+.producto .f-marca a { color: inherit; }
+.producto .parecidos { padding: 30px 0 0; margin-top: 36px; }
+.producto .mini { text-decoration: none; color: inherit; }
+.producto .mini:hover .mini-nombre { text-decoration: underline; }
+.mini-precio { font-size: 14px; margin-top: 2px; }
+.capa-nota h3 { font-size: 14px; font-weight: 500; padding-top: 3px; margin: 0; }
+.titulo-marca { margin-bottom: 6px !important; }
+.sub-marca { color: var(--suave); margin: 0 0 28px; }
+.rejilla-marca { grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); }
+@media (max-width: 760px) {
+  .producto-cuerpo { grid-template-columns: 1fr; gap: 20px; }
+  .producto-foto { position: static; padding: 12px; max-width: 360px; margin: 0 auto; width: 100%; }
+  .pagina-fija .volver { font-size: 14px; padding: 0 12px; }
+}

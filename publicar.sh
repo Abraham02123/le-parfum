@@ -18,6 +18,8 @@ if ! grep -Eq "whatsapp: *'[^']*[0-9]" config.js; then
   echo "⚠️  config.js no tiene número de WhatsApp: los clientes verán «Modo de prueba» y sus pedidos NO te llegarán."
 fi
 
+# Una página fija por perfume y por marca (para que Google las encuentre y la vista previa al compartir lleve su foto).
+node generar_paginas.js "$URL"
 node pruebas.js            # si una comprobación falla, no se publica nada
 
 # La vista previa al compartir el enlace (WhatsApp, Instagram) necesita la dirección completa de la imagen.
