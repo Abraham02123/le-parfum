@@ -52,6 +52,7 @@ como CSV → **Subir hoja corregida**. Antes de aplicar dice cuántos cambian y 
 | `publicar.sh` | sube la tienda a internet |
 | `generar_paginas.js` | una página fija por perfume y por marca (`p/`), `sitemap.xml` y `404.html`; lo corre `publicar.sh` con la dirección pública. Por qué: Google no lee lo que va tras «#p=», y al compartir un perfume la vista previa lleva su foto |
 | `pruebas.js` | `node pruebas.js` → 40 comprobaciones automáticas (también las corre `publicar.sh`) |
+| `versionar.js` | pone a cada estilo y programa una marca de su contenido (`tienda.js?v=…`) para que nadie vea una copia vieja guardada en su navegador; lo corre `publicar.sh` |
 
 ## De dónde salen los 500 y qué hay que saber
 

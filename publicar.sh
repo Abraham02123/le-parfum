@@ -22,6 +22,10 @@ fi
 node generar_paginas.js "$URL"
 node pruebas.js            # si una comprobación falla, no se publica nada
 
+# Cada estilo y programa se pide con una marca de su contenido («tienda.js?v=1a2b3c4d»), para que nadie vea
+# una copia vieja guardada en su navegador (26-nov). Detalle en versionar.js.
+node versionar.js
+
 # La vista previa al compartir el enlace (WhatsApp, Instagram) necesita la dirección completa de la imagen.
 sed -i -E "s#<meta property=\"og:image\" content=\"[^\"]*\">#<meta property=\"og:image\" content=\"${URL}img/compartir.jpg\">#" index.html
 grep -q 'og:url' index.html || sed -i "s#<meta property=\"og:type\" content=\"website\">#&\n  <meta property=\"og:url\" content=\"${URL}\">#" index.html
