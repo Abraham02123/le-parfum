@@ -11,8 +11,9 @@ Hoy la tienda ya está hecha y probada: 500 perfumes con foto, 40 comprobaciones
 | 1 · datos | ✅ nombre **Le Parfum**, México, pesos mexicanos (precios ×19,64 pesos por dólar, redondeados a …99). ⏳ **faltan el WhatsApp y la transferencia** |
 | 2 · GitHub | ✅ publicada en **https://abraham02123.github.io/le-parfum/** (cuenta Abraham02123) |
 | 3 · prueba desde el móvil | ⏳ cuando esté el WhatsApp (sin él, la página dice «Modo de prueba» y los pedidos no te llegan) |
-| quitar tu nombre del enlace | ⏳ tú eliges: ver «Paso 6» |
+| quitar tu nombre del enlace | ⏸ por ahora se queda así (26-nov); más adelante harás otra cuenta de GitHub (opción A) |
 | mejoras de diseño | ✅ 26-nov: favoritos ♥, prueba «¿No sabes cuál elegir?», franja de promesas, imagen para compartir con el nombre |
+| páginas para Google | ✅ 26-nov: una página por perfume (500) y por marca (113), lista de marcas al pie, preguntas frecuentes, «Vistos hace poco», página de «no existe». Al compartir un perfume, la vista previa lleva SU foto. Opcional: Paso 7 |
 
 Para cambiar algo después: lo editas (o me lo pides) en `D:\tienda-perfumes` y se corre `bash publicar.sh`
 (1-2 minutos y la página se actualiza sola).
@@ -137,8 +138,25 @@ con dirección propia.
 
 ---
 
+## Paso 7 (opcional) · Avisarle a Google que la tienda existe — 10 minutos tuyos
+
+Google acabará encontrando las 613 páginas solo, siguiendo los enlaces, pero puede tardar semanas. Si se las
+avisas tú, suele tardar días.
+
+**Qué haces tú:** entra a https://search.google.com/search-console con tu cuenta de Google → «Añadir propiedad» →
+«Prefijo de la URL» → pega `https://abraham02123.github.io/le-parfum/` → te da un archivo o una etiqueta para
+comprobar que la página es tuya: **mándamelo** (es público, no es una contraseña).
+
+**Qué hago yo (5 minutos):** lo pongo en la tienda, publico, y tú pulsas «Verificar». Después, en «Sitemaps»,
+escribes `sitemap.xml` y «Enviar».
+
+**Mejor hacerlo después del cambio de cuenta** (opción A del Paso 6): con otra dirección habría que repetirlo.
+
+---
+
 ## Lo que ya no te pide nada
 
 - Fotos: ya están las 500. Si un perfume nuevo no tiene foto, se dibuja un frasco del color de su aroma.
 - Pruebas: corren solas antes de cada publicación; si una falla, no se publica nada.
+- Páginas de cada perfume y marca: se rehacen solas en cada publicación (`generar_paginas.js`), con los precios del momento.
 - Cambios de diseño, textos o secciones: pídemelos y los publico yo.

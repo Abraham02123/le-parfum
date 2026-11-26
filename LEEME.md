@@ -50,6 +50,7 @@ como CSV → **Subir hoja corregida**. Antes de aplicar dice cuántos cambian y 
 | `supabase/esquema.sql` | la base de datos y sus reglas de seguridad (probado contra Postgres de verdad el 26-nov) |
 | `supabase/semilla.sql` | carga los 500 perfumes en la base (se puede correr dos veces sin duplicar) |
 | `publicar.sh` | sube la tienda a internet |
+| `generar_paginas.js` | una página fija por perfume y por marca (`p/`), `sitemap.xml` y `404.html`; lo corre `publicar.sh` con la dirección pública. Por qué: Google no lee lo que va tras «#p=», y al compartir un perfume la vista previa lleva su foto |
 | `pruebas.js` | `node pruebas.js` → 40 comprobaciones automáticas (también las corre `publicar.sh`) |
 
 ## De dónde salen los 500 y qué hay que saber
