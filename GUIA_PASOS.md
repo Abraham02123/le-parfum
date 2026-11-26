@@ -8,9 +8,9 @@ Hoy la tienda ya está hecha y probada: 500 perfumes con foto, 40 comprobaciones
 
 | paso | estado |
 |---|---|
-| 1 · datos | ✅ nombre **Le Parfum**, México, pesos mexicanos (precios ×19,64 pesos por dólar, redondeados a …99). ⏳ **faltan el WhatsApp y la transferencia** |
+| 1 · datos | ✅ nombre **Le Parfum**, México, pesos mexicanos (precios ×19,64 pesos por dólar, redondeados a …99). ✅ WhatsApp 52 81 3590 5000 (26-nov, en línea). ⏳ **falta la transferencia** |
 | 2 · GitHub | ✅ publicada en **https://abraham02123.github.io/le-parfum/** (cuenta Abraham02123) |
-| 3 · prueba desde el móvil | ⏳ cuando esté el WhatsApp (sin él, la página dice «Modo de prueba» y los pedidos no te llegan) |
+| 3 · prueba desde el móvil | ⏳ te toca: haz un pedido desde tu celular y mira que te llega a WhatsApp (Claude ya lo probó en la página pública: el pedido sale escrito hacia tu número y el aviso «Modo de prueba» ya no aparece) |
 | quitar tu nombre del enlace | ⏸ por ahora se queda así (26-nov); más adelante harás otra cuenta de GitHub (opción A) |
 | mejoras de diseño | ✅ 26-nov: favoritos ♥, prueba «¿No sabes cuál elegir?», franja de promesas, imagen para compartir con el nombre |
 | páginas para Google | ✅ 26-nov: una página por perfume (500) y por marca (113), lista de marcas al pie, preguntas frecuentes, «Vistos hace poco», página de «no existe». Al compartir un perfume, la vista previa lleva SU foto. Opcional: Paso 7 |
