@@ -5,7 +5,7 @@
 # Las siguientes veces solo sube los cambios (precios, fotos, catálogo) y la tienda se actualiza en 1-2 minutos.
 set -euo pipefail
 cd "$(dirname "$0")"
-REPO=tienda-perfumes
+REPO=le-parfum
 
 if ! gh auth status >/dev/null 2>&1; then
   echo "🔴 Falta entrar a GitHub. Escribe:  gh auth login   (elige GitHub.com → HTTPS → Login with a web browser)"; exit 1
@@ -37,7 +37,7 @@ fi
 
 if ! git remote get-url origin >/dev/null 2>&1; then
   gh repo create "$REPO" --public --source . --remote origin --push \
-    --description "Catálogo de perfumes" >/dev/null
+    --description "Le Parfum · catálogo de perfumes" >/dev/null
   gh api -X POST "repos/${DUENO}/${REPO}/pages" -f "source[branch]=$(git branch --show-current)" -f "source[path]=/" >/dev/null \
     || echo "(GitHub Pages ya estaba activado)"
 else
