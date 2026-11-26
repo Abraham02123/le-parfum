@@ -28,7 +28,7 @@ create table if not exists pedidos (
   id          bigint generated always as identity (start with 1001) primary key,
   creado      timestamptz not null default now(),
   nombre      text not null, telefono text not null, direccion text not null, ciudad text, notas text,
-  metodo_pago text not null default 'contra_entrega' check (metodo_pago in ('contra_entrega','en_linea')),
+  metodo_pago text not null default 'contra_entrega' check (metodo_pago in ('contra_entrega','transferencia','en_linea')),
   estado      text not null default 'pendiente' check (estado in ('pendiente','confirmado','enviado','entregado','cancelado')),
   total       numeric(12,2) not null,
   pagado      boolean not null default false
@@ -52,6 +52,13 @@ create or replace function es_admin() returns boolean
 language sql stable security definer set search_path = public as $$
   select exists (select 1 from admins where user_id = auth.uid());
 $$;
+
+-- Columnas añadidas con el catálogo de 500 (26-nov). «if not exists»: se puede correr sobre una base ya creada.
+alter table perfumes add column if not exists acordes text[];   -- lo que más se siente, en orden (barras de la ficha)
+alter table perfumes add column if not exists votos   int;      -- solo para ordenar por popularidad; no se muestra
+alter table perfumes add column if not exists anio    int;      -- año de lanzamiento
+alter table pedidos drop constraint if exists pedidos_metodo_pago_check;
+alter table pedidos add constraint pedidos_metodo_pago_check check (metodo_pago in ('contra_entrega','transferencia','en_linea'));
 
 -- ── Reglas de acceso ─────────────────────────────────────────────────────
 alter table perfumes     enable row level security;

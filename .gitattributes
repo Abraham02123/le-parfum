@@ -1,0 +1,2 @@
+# publicar.sh lo corre bash: con fin de línea de Windows fallaría
+*.sh text eol=lf

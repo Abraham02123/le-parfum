@@ -20,8 +20,17 @@
     return p[n];
   }
 
-  const texto = (p) => norm([p.nombre, p.marca, p.familia, p.genero, p.tipo, p.concentracion,
-    p.notas_salida, p.notas_corazon, p.notas_fondo].join(' '));
+  // El texto en el que se busca se calcula una vez por perfume (con 500 perfumes, recalcularlo en cada tecla se nota).
+  const cache = new WeakMap();
+  const texto = (p) => {
+    let t = cache.get(p);
+    if (!t) {
+      t = norm([p.nombre, p.marca, p.familia, p.genero, p.tipo === 'arabe' ? 'arabe' : p.tipo, p.concentracion,
+        p.notas_salida, p.notas_corazon, p.notas_fondo, (p.acordes || []).join(' ')].join(' '));
+      cache.set(p, t);
+    }
+    return t;
+  };
 
   // Cada palabra buscada tiene que aparecer, tal cual o con 1-2 letras de error.
   function coincide(p, q) {
@@ -39,11 +48,13 @@
   }
 
   const ORDENES = {
-    destacados: (a, b) => (b.destacado - a.destacado) || ((b.stock > 0) - (a.stock > 0)) || a.nombre.localeCompare(b.nombre),
+    // «Destacados»: primero los marcados a mano, después los que tienes en existencias y después los más votados.
+    destacados: (a, b) => (b.destacado - a.destacado) || ((b.stock > 0) - (a.stock > 0)) || ((b.votos || 0) - (a.votos || 0)) || a.nombre.localeCompare(b.nombre),
+    populares: (a, b) => ((b.votos || 0) - (a.votos || 0)) || a.nombre.localeCompare(b.nombre),
     precio_asc: (a, b) => a.precio - b.precio,
     precio_desc: (a, b) => b.precio - a.precio,
     nombre: (a, b) => a.nombre.localeCompare(b.nombre),
-    nuevos: (a, b) => String(b.creado).localeCompare(String(a.creado)),
+    nuevos: (a, b) => ((b.anio || 0) - (a.anio || 0)) || String(b.creado).localeCompare(String(a.creado)),
     disponibles: (a, b) => (b.stock - a.stock) || a.nombre.localeCompare(b.nombre),
   };
 
@@ -52,7 +63,8 @@
     const en = (arr, v) => !arr || !arr.length || arr.includes(v);
     const r = lista.filter((p) =>
       coincide(p, f.q) &&
-      (!f.categoria || f.categoria === 'todos' || p.genero === f.categoria || p.tipo === f.categoria) &&
+      (!f.categoria || f.categoria === 'todos' || p.genero === f.categoria || p.tipo === f.categoria ||
+        (f.categoria === 'ofertas' && p.precio_antes > p.precio)) &&
       en(f.marcas, p.marca) && en(f.familias, p.familia) && en(f.concentraciones, p.concentracion) &&
       en(f.tamanos, String(p.ml)) &&
       (f.min == null || f.min === '' || p.precio >= +f.min) &&
@@ -63,8 +75,8 @@
 
   function disponibilidad(p) {
     if (p.stock > 5) return { texto: 'Disponible', clase: 'ok' };
-    if (p.stock > 0) return { texto: `Disponible · quedan ${p.stock}`, clase: 'pocas' };
-    return { texto: 'Por encargo · lo conseguimos para ti', clase: 'encargo' };
+    if (p.stock > 0) return { texto: p.stock === 1 ? 'Última unidad' : `Últimas ${p.stock} unidades`, clase: 'pocas' };
+    return { texto: 'Por encargo: lo conseguimos para ti', clase: 'encargo' };
   }
 
   function dinero(n, cfg) {

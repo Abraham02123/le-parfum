@@ -1,59 +1,84 @@
 # Tienda de perfumes — cómo usarla
 
-Catálogo con buscador que perdona errores de escritura, categorías, filtros, orden, carrito y pedido
-**contra entrega** (el cliente paga cuando recibe). Al hacer un pedido el inventario baja solo; lo que no
-hay en existencias se sigue mostrando y se puede pedir «por encargo». Panel privado para ver pedidos,
-cambiar su estado y llevar el inventario.
+Catálogo de **500 perfumes** con foto del frasco, buscador que perdona errores de escritura, categorías
+(mujer, hombre, unisex, árabes, diseñador, nicho), filtros (familia de aroma, marca, precio;
+concentración y tamaño aparecen solos cuando se cargan esos datos), orden (destacados, más populares, precio, novedades, nombre), ficha con «cómo huele», notas y
+parecidos, carrito y pedido. Lo agotado se sigue mostrando y se puede pedir «por encargo».
 
-Costo: **0**. Sin instalar nada: son archivos sueltos que se abren en el navegador.
+Costo: **0**. No se instala nada: son archivos sueltos que abre cualquier navegador.
 
-## 1 · Probarla ya (modo demostración, 1 minuto)
+👉 **Los pasos para ponerla en internet, uno por uno, están en `GUIA_PASOS.md`.**
 
-- Abrir `index.html` con doble clic → la tienda con 18 perfumes de ejemplo (precios inventados).
-- Abrir `admin.html` → contraseña `demo123` → el panel.
-- En este modo los pedidos se guardan **solo en ese navegador**: sirve para mirar, no para vender.
+## Las tres maneras de funcionar (se elige sola según `config.js`)
 
-## 2 · Ponerla a vender de verdad (unos 30 minutos, gratis)
+| modo | cuándo se activa | qué pasa con un pedido | inventario |
+|---|---|---|---|
+| **demostración** | `config.js` sin WhatsApp ni base de datos | se guarda solo en el navegador de quien lo hizo; arriba sale «Modo de prueba» | baja solo en ese navegador |
+| **WhatsApp** (recomendado para empezar) | `whatsapp` con tu número | al confirmar, al cliente se le abre WhatsApp con el pedido ya escrito y te lo manda | no baja solo: lo ajustas tú con la hoja de precios (abajo) |
+| **base de datos** (Supabase, gratis) | `supabaseUrl` y `supabaseKey` rellenos | queda guardado en tu panel, con su estado | baja solo con cada venta; cancelar lo devuelve |
 
-1. **Base de datos gratuita**: crear cuenta en https://supabase.com → «New project» (plan Free).
-2. En el proyecto: **SQL Editor** → pegar TODO `supabase/esquema.sql` → **Run**. Crea las tablas, las
-   reglas de acceso y las dos funciones (crear pedido, cambiar estado). Se puede correr varias veces.
-3. **Authentication → Users → Add user**: tu correo y una contraseña. Copiar el `UID` que aparece.
-4. SQL Editor: `insert into admins values ('PEGAR-AQUI-EL-UID');` → así ese usuario entra al panel.
-5. **Authentication → Sign In / Providers**: desactivar «Allow new users to sign up» (que nadie más se
-   pueda registrar).
-6. **Project Settings → API**: copiar «Project URL» y la clave «anon public».
-7. Abrir `config.js` y rellenar: `supabaseUrl`, `supabaseKey`, `whatsapp` (código de país + número, sin
-   `+` ni espacios), `moneda` (`COP`, `MXN`, `USD`…), `nombre`, `lema`. **Es el único archivo a tocar.**
-8. Abrir `admin.html`, entrar con tu correo y cargar los perfumes (botón «+ Nuevo perfume»). Fotos: pegar
-   el enlace de la imagen en el campo «Foto»; sin foto se dibuja un frasco de color.
-9. **Publicarla gratis**: https://pages.cloudflare.com o https://app.netlify.com/drop → arrastrar la
-   carpeta entera. Te da una dirección tipo `tu-tienda.pages.dev`. Dominio propio (opcional) ~10-15 USD/año.
+## Publicarla (GitHub Pages, gratis)
+
+```
+bash publicar.sh
+```
+La primera vez pide haber entrado a GitHub con `gh auth login`. Crea el sitio
+`https://TU-USUARIO.github.io/tienda-perfumes/`, que abre cualquiera desde el móvil o el ordenador.
+Cada vez que se vuelve a correr sube los cambios; la tienda se actualiza en 1-2 minutos.
+
+## Cambiar precios y existencias sin tocar código
+
+Panel (`admin.html`) → «Perfumes e inventario» → **Descargar hoja de precios y existencias** → abrirla en
+Excel o Google Sheets → cambiar las columnas `precio`, `stock` (existencias) o `visible` (si/no) → guardar
+como CSV → **Subir hoja corregida**. Antes de aplicar dice cuántos cambian y qué filas tienen error.
+
+- En modo **base de datos** el cambio lo ven los clientes al instante.
+- En modo **WhatsApp** el cambio queda en tu navegador: «Descargar catalogo.js para publicar», reemplazar ese
+  archivo en esta carpeta y `bash publicar.sh` (o mandárselo a Claude y lo hace él).
 
 ## Qué hace cada cosa
 
 | archivo | qué es |
 |---|---|
-| `config.js` | tus datos (nombre, moneda, WhatsApp, conexión a la base) |
-| `index.html` · `tienda.js` | la tienda que ven los clientes |
-| `admin.html` · `admin.js` | tu panel privado |
+| `config.js` | tus datos: nombre, lema, moneda, WhatsApp, datos de transferencia, conexión a la base. **El único archivo a tocar** |
+| `catalogo.js` | los 500 perfumes (lo genera `datos/armar_catalogo.py`; no editar a mano) |
+| `img/` | una foto por perfume (`<número>.webp`) y la imagen que sale al compartir el enlace |
+| `index.html` · `tienda.js` · `estilos.css` | la tienda que ven los clientes |
+| `admin.html` · `admin.js` · `admin.css` | tu panel privado |
 | `logica.js` | buscador, filtros, orden, reparto existencias / encargo |
-| `datos.js` | guarda y lee: en el navegador (demo) o en Supabase (real) |
-| `supabase/esquema.sql` | la base de datos y sus reglas de seguridad |
-| `pruebas.js` | `node pruebas.js` → 31 comprobaciones automáticas |
+| `datos.js` | guarda y lee según el modo |
+| `supabase/esquema.sql` | la base de datos y sus reglas de seguridad (probado contra Postgres de verdad el 26-nov) |
+| `supabase/semilla.sql` | carga los 500 perfumes en la base (se puede correr dos veces sin duplicar) |
+| `publicar.sh` | sube la tienda a internet |
+| `pruebas.js` | `node pruebas.js` → 40 comprobaciones automáticas (también las corre `publicar.sh`) |
+
+## De dónde salen los 500 y qué hay que saber
+
+- **Lista**: los 460 perfumes con más votos de Fragrantica más 40 árabes populares (para que la sección
+  árabe tenga 45 y no 5). Los votos son de una copia de 2024 y solo ordenan «Más populares»; no se muestran.
+- **Notas y acordes** traducidos al español. **Licencia de esa copia de datos**: uso no comercial
+  (CC BY-NC-SA 4.0). Las notas de un perfume son información pública que publican las propias marcas, pero
+  si la tienda crece conviene reescribir las descripciones con texto propio.
+- **Fotos**: las del frasco que publican las marcas (las mismas que muestra Fragrantica), guardadas aquí en
+  formato liviano (6,5 MB las 500). Es práctica común en tiendas de perfumes; el pie de página lo aclara.
+- **Precios**: de referencia, por marca (no por perfume). La ficha y el carrito avisan que el precio final
+  se confirma por WhatsApp. Cambiarlos con la hoja de precios.
+- **Existencias**: todas en 0 → todo sale «Por encargo». Al poner existencias sale «Disponible».
 
 ## Reglas que ya trae
 
-- El precio de un pedido sale **de la base**, nunca del navegador del cliente (no se puede trucar).
+- El precio de un pedido sale del catálogo o de la base, **nunca** del navegador del cliente (no se puede trucar).
 - Un pedido de 5 cuando hay 3: se descuentan 3 y quedan **2 por encargo**; el panel los cuenta aparte.
 - Cancelar un pedido devuelve al inventario **solo** lo que se había descontado. Un cancelado no se reabre.
-- Los agotados siguen visibles («Por encargo · lo conseguimos para ti»). Para ocultar uno: «Visible» en el panel.
-- Con WhatsApp configurado, el cliente al confirmar te manda el pedido ya escrito (aviso instantáneo y gratis).
+- Pago: contra entrega siempre; **transferencia** si rellenas `transferencia` en `config.js` (banco, número, titular).
 
 ## Lo que todavía NO tiene
 
-- **Pago en línea** (tarjeta): depende del país (Mercado Pago, Wompi, Stripe…); cobran ~3-4 % por venta.
-  El botón aparece como «Próximamente».
+- **Pago con tarjeta en línea**: depende del país (Mercado Pago, Wompi, Stripe…); cobran ~3-4 % por venta.
+  Sale como «Próximamente».
 - **Aviso por correo** al dueño (el aviso es por WhatsApp).
-- El `esquema.sql` está revisado y su lógica probada en modo demo, pero **no se ha corrido todavía contra
-  una base Supabase real**: la primera vez, hacer un pedido de prueba y cancelarlo.
+
+## Si ya tenías creada la base de datos antes del 26-nov
+
+Volver a correr `supabase/esquema.sql` entero: añade las columnas nuevas (acordes, votos, año) y permite el
+pago por transferencia. No borra nada.

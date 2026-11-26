@@ -22,4 +22,12 @@ window.TIENDA_CONFIG = {
   // Pago en línea: queda apagado hasta saber el país (Mercado Pago, Wompi, Stripe…).
   // Mientras sea null, el pago es contra entrega.
   pagoEnLinea: null,
+
+  // Pago por transferencia: escribe cómo te pagan (p. ej. 'Nequi o Bancolombia, te enviamos los datos').
+  // Vacío = no se ofrece; el cliente solo ve «contra entrega».
+  transferencia: '',
+
+  // true = junto a cada precio se avisa que es de referencia y que se confirma por WhatsApp.
+  // Ponlo en false cuando hayas cargado tus precios reales.
+  preciosReferencia: true,
 };

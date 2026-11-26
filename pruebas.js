@@ -63,5 +63,25 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
     const faltan = [...new Set(ids)].filter((id) => !pagina.includes(`id="${id}"`) && !codigo.includes(`id="${id}"`));
     ok(!faltan.length, `${html}: faltan ids ${faltan}`);
   }
+  // el catálogo de 500 (catalogo.js): forma, fotos y modo WhatsApp, en un contexto aparte para no mezclar con el demo
+  const ctx = { console };
+  ctx.window = ctx; ctx.localStorage = { getItem: () => null, setItem() {}, removeItem() {} };
+  vm.createContext(ctx);
+  for (const f of ['logica.js', 'catalogo.js']) vm.runInContext(fs.readFileSync(__dirname + '/' + f, 'utf8'), ctx, { filename: f });
+  ctx.TIENDA_CONFIG = Object.assign({}, globalThis.TIENDA_CONFIG, { whatsapp: '57 300 123 4567' });
+  vm.runInContext(fs.readFileSync(__dirname + '/datos.js', 'utf8'), ctx, { filename: 'datos.js' });
+  const C5 = ctx.CATALOGO;
+  ok(C5.length === 500, 'catálogo de 500');
+  ok(new Set(C5.map((p) => p.id)).size === 500, 'ids únicos');
+  const sinFoto = C5.filter((p) => !p.imagen_url || !fs.existsSync(__dirname + '/' + p.imagen_url));
+  ok(!sinFoto.length, `fotos que faltan: ${sinFoto.slice(0, 5).map((p) => p.imagen_url)}`);
+  ok(C5.every((p) => p.precio > 0 && p.nombre && p.marca), 'precio, nombre y marca en todos');
+  const FAM = ['Floral', 'Dulce', 'Cítrica', 'Amaderada', 'Oriental', 'Frutal', 'Aromática', 'Fresca', 'Cuero y oud'];
+  ok(C5.every((p) => FAM.includes(p.familia)), 'familias válidas');
+  ok(C5.every((p) => ['hombre', 'mujer', 'unisex'].includes(p.genero) && ['disenador', 'nicho', 'arabe'].includes(p.tipo)), 'género y tipo válidos');
+  const W = ctx.Datos; ok(W.modo === 'whatsapp', 'con número de WhatsApp entra en modo whatsapp');
+  ok((await W.perfumes()).length === 500, 'modo whatsapp muestra los 500');
+  const pw = await W.crearPedido({ nombre: 'Ana', telefono: '300', direccion: 'Calle 1', metodo_pago: 'transferencia', items: [{ perfume_id: C5[0].id, cantidad: 2 }] });
+  ok(pw.total === C5[0].precio * 2, 'modo whatsapp calcula el total');
   console.log(`TODAS OK (${n} comprobaciones)`);
 })().catch((e) => { console.error('FALLA:', e.message); process.exit(1); });

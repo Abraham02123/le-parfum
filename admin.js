@@ -35,7 +35,7 @@
       return `<article class="pedido"><header>
         <h3>#${o.id}</h3><span class="estado ${o.estado}">${o.estado}</span>
         <span style="color:var(--suave)">${new Date(o.creado).toLocaleString(C.idioma)}</span>
-        <span style="margin-left:auto"><b>${dinero(o.total)}</b> · ${o.metodo_pago === 'contra_entrega' ? 'contra entrega' : 'en línea'}${o.pagado ? ' · <span style="color:var(--ok)">pagado</span>' : ''}</span></header>
+        <span style="margin-left:auto"><b>${dinero(o.total)}</b> · ${{ contra_entrega: 'contra entrega', transferencia: 'transferencia', en_linea: 'en línea' }[o.metodo_pago] || o.metodo_pago}${o.pagado ? ' · <span style="color:var(--ok)">pagado</span>' : ''}</span></header>
         <p style="margin:8px 0 0">${esc(o.nombre)} · ${esc(o.telefono)} · ${esc(o.direccion)}${o.ciudad ? ', ' + esc(o.ciudad) : ''}</p>
         ${o.notas ? `<p style="margin:4px 0;color:var(--suave)">Nota: ${esc(o.notas)}</p>` : ''}
         <ul>${o.items.map((l) => `<li>${l.cantidad} × ${esc(l.nombre)} · ${dinero(l.precio)}${l.por_encargo ? ` <b style="color:var(--encargo)">(${l.por_encargo} por encargo)</b>` : ''}</li>`).join('')}</ul>
@@ -104,6 +104,60 @@
     };
     $('#capa-editar').onclick = (e) => { if (e.target.id === 'capa-editar' || e.target.closest('[data-cerrar]')) $('#capa-editar').hidden = true; };
     $('#salir').onclick = async () => { await D.salir(); location.reload(); };
+    hoja();
+  }
+
+  // ── Hoja de precios y existencias (CSV con «;», como lo abre Excel en español) ──────────────────
+  const bajar = (nombre, texto, tipo) => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([texto], { type: tipo })); a.download = nombre; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  };
+  const celda = (v) => (/[;"\n]/.test(String(v ?? '')) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v ?? ''));
+  function leerCsv(texto) {
+    const lineas = texto.replace(/^﻿/, '').split(/\r?\n/).filter((l) => l.trim());
+    const sep = (lineas[0].match(/;/g) || []).length >= (lineas[0].match(/,/g) || []).length ? ';' : ',';
+    const partir = (l) => { const out = []; let cur = '', q = false;
+      for (let i = 0; i < l.length; i++) { const c = l[i];
+        if (q) { if (c === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+        else if (c === '"') q = true; else if (c === sep) { out.push(cur); cur = ''; } else cur += c; }
+      out.push(cur); return out.map((x) => x.trim()); };
+    const cab = partir(lineas[0]).map((x) => x.toLowerCase());
+    return lineas.slice(1).map((l) => Object.fromEntries(partir(l).map((v, i) => [cab[i], v])));
+  }
+  const numero = (v) => { const t = String(v ?? '').replace(/\s/g, '').replace(/[^\d.,-]/g, '');
+    if (!t) return NaN; return Number(t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t); };
+  function hoja() {
+    const local = D.modo !== 'supabase';
+    $('#bajar-catalogo').hidden = !local; $('#reiniciar-local').hidden = !local; $('#nota-modo').hidden = D.modo !== 'whatsapp';
+    $('#bajar-hoja').onclick = () => {
+      const filas = [['id', 'marca', 'nombre', 'precio', 'stock', 'visible']]
+        .concat(perfumes.map((p) => [p.id, p.marca, p.nombre, String(p.precio).replace('.', ','), p.stock, p.visible ? 'si' : 'no']));
+      bajar('precios_y_existencias.csv', '﻿' + filas.map((f) => f.map(celda).join(';')).join('\r\n'), 'text/csv;charset=utf-8');
+    };
+    $('#subir-hoja').onchange = async (e) => {
+      const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+      const porId = new Map(perfumes.map((p) => [String(p.id), p])), cambios = [], malas = [];
+      for (const [i, r] of leerCsv(await f.text()).entries()) {
+        const p = porId.get(String(r.id || '').trim()); if (!p) { malas.push(i + 2); continue; }
+        const c = { id: p.id }, pr = numero(r.precio), st = numero(r.stock), vi = String(r.visible || '').toLowerCase();
+        if (r.precio !== undefined && r.precio !== '') { if (!(pr > 0)) { malas.push(i + 2); continue; } if (pr !== Number(p.precio)) c.precio = pr; }
+        if (r.stock !== undefined && r.stock !== '') { if (!(st >= 0) || !Number.isInteger(st)) { malas.push(i + 2); continue; } if (st !== p.stock) c.stock = st; }
+        if (vi) { const v = ['si', 'sí', '1', 'true', 'x'].includes(vi); if (v !== p.visible) c.visible = v; }
+        if (Object.keys(c).length > 1) cambios.push(c);
+      }
+      if (!cambios.length) return aviso(malas.length ? `Nada cambiado. Filas con error: ${malas.slice(0, 8).join(', ')}` : 'La hoja no trae cambios');
+      if (!confirm(`Se van a cambiar ${cambios.length} ${cambios.length === 1 ? 'perfume' : 'perfumes'}.` + (malas.length ? ` Se saltan ${malas.length} filas con error (filas ${malas.slice(0, 8).join(', ')}).` : '') + ' ¿Seguir?')) return;
+      await intentar(() => D.guardarVarios(cambios), cambios.length === 1 ? '1 perfume actualizado' : `${cambios.length} perfumes actualizados`);
+    };
+    $('#bajar-catalogo').onclick = async () => {
+      const todos = await D.todosPerfumes();
+      bajar('catalogo.js', `// Catálogo exportado desde el panel el ${new Date().toLocaleString()}\nwindow.CATALOGO_VERSION = '${Date.now()}';\nwindow.CATALOGO = ${JSON.stringify(todos)};\n`, 'text/javascript;charset=utf-8');
+    };
+    $('#reiniciar-local').onclick = async () => {
+      if (!confirm('Se borran los cambios hechos en este navegador y vuelve el catálogo publicado. ¿Seguir?')) return;
+      D.reiniciarLocal(); await recargar(); aviso('Vuelto al catálogo publicado');
+    };
   }
 
   async function iniciar() {

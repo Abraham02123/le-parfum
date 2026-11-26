@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Panel · Perfumes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="estilos.css">
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
   <style>
     .panel { max-width: 1200px; margin: 0 auto; padding: 24px 4vw 60px; }
     .pestanas { display: flex; gap: 10px; margin: 18px 0; flex-wrap: wrap; }
@@ -76,6 +76,15 @@
           <input id="buscar-admin" placeholder="Buscar perfume…">
           <button class="btn btn-dorado" id="nuevo">+ Nuevo perfume</button>
         </div>
+        <div class="barra-admin barra-hoja">
+          <button class="btn btn-borde" id="bajar-hoja" title="Abre en Excel o Google Sheets: cambia precio, existencias o visible y vuelve a subirla">Descargar hoja de precios y existencias</button>
+          <label class="btn btn-borde" for="subir-hoja">Subir hoja corregida</label>
+          <input type="file" id="subir-hoja" accept=".csv,text/csv" hidden>
+          <button class="btn btn-borde" id="bajar-catalogo" hidden>Descargar catalogo.js para publicar</button>
+          <button class="btn btn-borde" id="reiniciar-local" hidden>Descartar mis cambios</button>
+        </div>
+        <p class="nota-modo" id="nota-modo" hidden>Sin base de datos, lo que cambies aquí se guarda solo en este navegador. Para que lo vean
+          los clientes: «Descargar catalogo.js para publicar» y reemplaza ese archivo en la página (o mándamelo y lo subo yo).</p>
         <table class="tabla">
           <thead><tr><th>Perfume</th><th class="opc">Categoría</th><th>Precio</th><th>Existencias</th><th class="opc">Visible</th><th></th></tr></thead>
           <tbody id="tabla-perfumes"></tbody>
@@ -120,6 +129,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="logica.js"></script>
   <script src="demo-catalogo.js"></script>
+  <script src="catalogo.js"></script>
   <script src="datos.js"></script>
   <script src="admin.js"></script>
 </body>

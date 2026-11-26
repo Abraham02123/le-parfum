@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Publica la tienda en GitHub Pages (gratis) y deja el enlace para compartir.
+# Uso (desde Git Bash, en esta carpeta):   bash publicar.sh
+# La primera vez hace falta haber entrado a GitHub UNA vez con:  gh auth login
+# Las siguientes veces solo sube los cambios (precios, fotos, catálogo) y la tienda se actualiza en 1-2 minutos.
+set -euo pipefail
+cd "$(dirname "$0")"
+REPO=tienda-perfumes
+
+if ! gh auth status >/dev/null 2>&1; then
+  echo "🔴 Falta entrar a GitHub. Escribe:  gh auth login   (elige GitHub.com → HTTPS → Login with a web browser)"; exit 1
+fi
+DUENO=$(gh api user --jq .login)
+URL="https://${DUENO}.github.io/${REPO}/"
+
+# Sin número de WhatsApp la tienda sale en «modo de prueba» (los pedidos no te llegan): avisar, no impedir.
+if ! grep -Eq "whatsapp: *'[^']*[0-9]" config.js; then
+  echo "⚠️  config.js no tiene número de WhatsApp: los clientes verán «Modo de prueba» y sus pedidos NO te llegarán."
+fi
+
+node pruebas.js            # si una comprobación falla, no se publica nada
+
+# La vista previa al compartir el enlace (WhatsApp, Instagram) necesita la dirección completa de la imagen.
+sed -i -E "s#<meta property=\"og:image\" content=\"[^\"]*\">#<meta property=\"og:image\" content=\"${URL}img/compartir.jpg\">#" index.html
+grep -q 'og:url' index.html || sed -i "s#<meta property=\"og:type\" content=\"website\">#&\n  <meta property=\"og:url\" content=\"${URL}\">#" index.html
+
+git add -A
+git diff --cached --quiet || git commit -q -m "Publicar tienda $(date '+%Y-%m-%d %H:%M')"
+
+if ! git remote get-url origin >/dev/null 2>&1; then
+  gh repo create "$REPO" --public --source . --remote origin --push \
+    --description "Catálogo de perfumes" >/dev/null
+  gh api -X POST "repos/${DUENO}/${REPO}/pages" -f "source[branch]=$(git branch --show-current)" -f "source[path]=/" >/dev/null \
+    || echo "(GitHub Pages ya estaba activado)"
+else
+  git push -q origin HEAD
+fi
+
+echo "Esperando a que GitHub publique (suele tardar 1-2 minutos)…"
+for i in $(seq 1 30); do
+  if curl -s -o /dev/null -w '%{http_code}' "$URL" | grep -q 200; then echo "✅ Publicada: $URL"; exit 0; fi
+  sleep 10
+done
+echo "⏳ Todavía no responde. Mira el estado en: https://github.com/${DUENO}/${REPO}/actions  — la dirección será $URL"
