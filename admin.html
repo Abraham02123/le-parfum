@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Panel · Perfumes</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+  <style>
+    .panel { max-width: 1200px; margin: 0 auto; padding: 24px 4vw 60px; }
+    .pestanas { display: flex; gap: 10px; margin: 18px 0; flex-wrap: wrap; }
+    .tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .tabla th { text-align: left; color: var(--suave); font-weight: 500; border-bottom: 1px solid var(--linea); padding: 10px 8px; }
+    .tabla td { border-bottom: 1px solid var(--linea); padding: 10px 8px; vertical-align: middle; }
+    .tabla tr.oculto { opacity: .45; }
+    .stock { display: inline-flex; align-items: center; gap: 6px; }
+    .stock button { background: var(--panel2); border: 1px solid var(--linea); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; color: var(--oro2); }
+    .stock b { min-width: 24px; text-align: center; }
+    .pedido { background: var(--panel); border: 1px solid var(--linea); border-radius: var(--radio); padding: 16px 18px; margin-bottom: 14px; }
+    .pedido header { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+    .pedido h3 { font-size: 22px; }
+    .pedido ul { margin: 10px 0; padding-left: 18px; color: var(--suave); }
+    .pedido select, .barra-admin input, .barra-admin select { background: var(--panel2); border: 1px solid var(--linea); border-radius: 8px; padding: 7px 10px; color: var(--texto); }
+    .estado { padding: 3px 10px; border-radius: 999px; font-size: 12px; border: 1px solid var(--linea); }
+    .estado.pendiente { color: var(--aviso); } .estado.confirmado { color: var(--oro2); } .estado.enviado { color: #8fb3e0; }
+    .estado.entregado { color: var(--ok); } .estado.cancelado { color: var(--error); }
+    .barra-admin { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 10px 0 20px; }
+    .resumen div { background: var(--panel); border: 1px solid var(--linea); border-radius: 12px; padding: 14px; }
+    .resumen small { color: var(--suave); display: block; } .resumen b { font: 600 26px var(--serif); color: var(--oro2); }
+    .rejilla-form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .rejilla-form .entero { grid-column: 1 / -1; }
+    .formulario select { background: var(--panel2); border: 1px solid var(--linea); border-radius: 10px; padding: 11px 12px; color: var(--texto); }
+    @media (max-width: 700px) { .rejilla-form { grid-template-columns: 1fr; } .tabla .opc { display: none; } }
+  </style>
+</head>
+<body>
+  <div id="aviso-demo" class="aviso-demo" hidden>Modo demostración · contraseña de prueba en config.js</div>
+
+  <!-- Entrar -->
+  <div class="capa" id="capa-entrar" style="position:static;min-height:100vh;background:none" hidden>
+    <form class="ficha formulario" id="form-entrar">
+      <h2>Panel de la tienda</h2>
+      <label id="campo-email">Correo<input name="email" type="email" autocomplete="username"></label>
+      <label>Contraseña<input name="clave" type="password" required autocomplete="current-password"></label>
+      <p class="error" id="error-entrar" hidden></p>
+      <button class="btn btn-dorado ancho">Entrar</button>
+    </form>
+  </div>
+
+  <div id="app" hidden>
+    <header class="cabecera">
+      <a href="index.html" class="marca-tienda" id="nombre-tienda" target="_blank">Tienda</a>
+      <div style="flex:1"></div>
+      <button class="btn btn-borde" id="salir">Salir</button>
+    </header>
+    <div class="panel">
+      <div class="resumen" id="resumen"></div>
+      <div class="pestanas">
+        <button class="chip activo" data-pestana="pedidos">Pedidos</button>
+        <button class="chip" data-pestana="perfumes">Perfumes e inventario</button>
+      </div>
+
+      <section id="pestana-pedidos">
+        <div class="barra-admin">
+          <select id="filtro-estado"><option value="">Todos los estados</option><option>pendiente</option><option>confirmado</option>
+            <option>enviado</option><option>entregado</option><option>cancelado</option></select>
+          <label class="casilla" style="margin:0"><input type="checkbox" id="solo-encargo"> Solo con perfumes por encargo</label>
+        </div>
+        <div id="lista-pedidos"></div>
+      </section>
+
+      <section id="pestana-perfumes" hidden>
+        <div class="barra-admin">
+          <input id="buscar-admin" placeholder="Buscar perfume…">
+          <button class="btn btn-dorado" id="nuevo">+ Nuevo perfume</button>
+        </div>
+        <table class="tabla">
+          <thead><tr><th>Perfume</th><th class="opc">Categoría</th><th>Precio</th><th>Existencias</th><th class="opc">Visible</th><th></th></tr></thead>
+          <tbody id="tabla-perfumes"></tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  <!-- Editar perfume -->
+  <div class="capa" id="capa-editar" hidden>
+    <form class="ficha formulario" id="form-perfume" style="width:min(760px,100%)">
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+      <h2 id="titulo-editar">Perfume</h2>
+      <input type="hidden" name="id">
+      <div class="rejilla-form">
+        <label>Marca<input name="marca" required list="lista-marcas"></label>
+        <label>Nombre<input name="nombre" required></label>
+        <label>Género<select name="genero"><option>mujer</option><option>hombre</option><option>unisex</option></select></label>
+        <label>Tipo<select name="tipo"><option value="arabe">Árabe</option><option value="disenador">Diseñador</option><option value="nicho">Nicho</option></select></label>
+        <label>Familia de aroma<input name="familia" list="lista-familias" placeholder="Dulce, Amaderada, Floral…"></label>
+        <label>Concentración<select name="concentracion"><option>EDP</option><option>EDT</option><option>Parfum</option><option>Extrait</option><option>EDC</option></select></label>
+        <label>Tamaño (ml)<input name="ml" type="number" min="1"></label>
+        <label>Existencias<input name="stock" type="number" min="0" required value="0"></label>
+        <label>Precio<input name="precio" type="number" min="0" step="0.01" required></label>
+        <label>Precio antes (para mostrar rebaja)<input name="precio_antes" type="number" min="0" step="0.01"></label>
+        <label class="entero">Foto (enlace a la imagen)<input name="imagen_url" type="url" placeholder="https://…"></label>
+        <label class="entero">Descripción<textarea name="descripcion" rows="2"></textarea></label>
+        <label>Notas de salida<input name="notas_salida"></label>
+        <label>Notas de corazón<input name="notas_corazon"></label>
+        <label class="entero">Notas de fondo<input name="notas_fondo"></label>
+        <label class="casilla"><input type="checkbox" name="destacado"> Destacado (sale primero)</label>
+        <label class="casilla"><input type="checkbox" name="visible" checked> Visible en la tienda</label>
+      </div>
+      <p class="error" id="error-perfume" hidden></p>
+      <button class="btn btn-dorado ancho">Guardar</button>
+    </form>
+  </div>
+  <datalist id="lista-marcas"></datalist><datalist id="lista-familias"></datalist>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="logica.js"></script>
+  <script src="demo-catalogo.js"></script>
+  <script src="datos.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

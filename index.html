@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Perfumes</title>
+  <meta name="description" content="Catálogo de perfumes originales: árabes, de diseñador y de nicho. Pago contra entrega.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div id="aviso-demo" class="aviso-demo" hidden>Modo demostración: los pedidos se guardan solo en este navegador.</div>
+
+  <header class="cabecera">
+    <a href="#" class="marca-tienda" id="nombre-tienda">Perfumes</a>
+    <label class="buscador">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="buscar" type="search" placeholder="Busca por nombre, marca o aroma (vainilla, oud…)" autocomplete="off">
+    </label>
+    <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 7h12l-1 13H7L6 7Z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>
+      <span id="cuenta-carrito">0</span>
+    </button>
+  </header>
+
+  <section class="portada">
+    <p class="sobretitulo">Colección</p>
+    <h1 id="titulo-portada">Perfumes</h1>
+    <p id="lema" class="lema"></p>
+    <nav class="categorias" id="categorias" aria-label="Categorías"></nav>
+  </section>
+
+  <main class="contenido">
+    <aside class="filtros" id="filtros" aria-label="Filtros">
+      <div class="filtros-cabecera"><h2>Filtrar</h2><button class="enlace" id="limpiar">Limpiar</button></div>
+      <details open><summary>Disponibilidad</summary>
+        <label class="casilla"><input type="checkbox" id="solo-disponibles"> Solo con existencias</label>
+      </details>
+      <details open><summary>Precio</summary>
+        <div class="rango"><input type="number" id="precio-min" placeholder="Mín" min="0"><span>—</span><input type="number" id="precio-max" placeholder="Máx" min="0"></div>
+      </details>
+      <details open><summary>Marca</summary><div id="f-marcas" class="lista-casillas"></div></details>
+      <details open><summary>Familia de aroma</summary><div id="f-familias" class="lista-casillas"></div></details>
+      <details><summary>Concentración</summary><div id="f-concentraciones" class="lista-casillas"></div></details>
+      <details><summary>Tamaño</summary><div id="f-tamanos" class="lista-casillas"></div></details>
+      <button class="btn btn-dorado solo-movil" id="cerrar-filtros">Ver resultados</button>
+    </aside>
+
+    <section class="resultados">
+      <div class="barra">
+        <button class="btn btn-borde solo-movil" id="abrir-filtros">Filtros</button>
+        <p id="conteo" class="conteo"></p>
+        <label class="orden">Ordenar
+          <select id="orden">
+            <option value="destacados">Destacados</option>
+            <option value="nuevos">Novedades</option>
+            <option value="precio_asc">Precio: menor a mayor</option>
+            <option value="precio_desc">Precio: mayor a menor</option>
+            <option value="nombre">Nombre A-Z</option>
+            <option value="disponibles">Más existencias</option>
+          </select>
+        </label>
+      </div>
+      <div id="rejilla" class="rejilla"></div>
+      <p id="vacio" class="vacio" hidden>No encontramos perfumes con esos filtros. Escríbenos y lo conseguimos.</p>
+    </section>
+  </main>
+
+  <footer class="pie">
+    <p id="pie-nombre"></p>
+    <p>Perfumes originales · Envíos con pago contra entrega · Lo que no tengamos, lo conseguimos.</p>
+  </footer>
+
+  <!-- Ficha de un perfume -->
+  <div class="capa" id="capa-ficha" hidden>
+    <article class="ficha" role="dialog" aria-modal="true">
+      <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+      <div id="ficha-contenido"></div>
+    </article>
+  </div>
+
+  <!-- Carrito -->
+  <div class="capa" id="capa-carrito" hidden>
+    <aside class="cajon" role="dialog" aria-modal="true" aria-label="Carrito">
+      <div class="cajon-cabecera"><h2>Tu pedido</h2><button class="cerrar" data-cerrar aria-label="Cerrar">×</button></div>
+      <div id="lineas-carrito" class="lineas"></div>
+      <div class="cajon-pie">
+        <div class="total"><span>Total</span><strong id="total-carrito"></strong></div>
+        <p class="nota-encargo" id="nota-encargo" hidden>Algunos perfumes son por encargo: te avisamos el tiempo de llegada al confirmar.</p>
+        <button class="btn btn-dorado ancho" id="ir-pagar">Hacer el pedido</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Datos de entrega -->
+  <div class="capa" id="capa-pedido" hidden>
+    <form class="ficha formulario" id="form-pedido" role="dialog" aria-modal="true">
+      <button type="button" class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+      <h2>Datos de entrega</h2>
+      <label>Nombre completo<input name="nombre" required autocomplete="name"></label>
+      <label>Teléfono / WhatsApp<input name="telefono" required inputmode="tel" autocomplete="tel"></label>
+      <label>Dirección<input name="direccion" required autocomplete="street-address"></label>
+      <label>Ciudad<input name="ciudad" autocomplete="address-level2"></label>
+      <label>Notas (opcional)<textarea name="notas" rows="2" placeholder="Referencias, horario…"></textarea></label>
+      <fieldset class="pagos"><legend>Forma de pago</legend>
+        <label class="pago"><input type="radio" name="metodo_pago" value="contra_entrega" checked> <span><b>Contra entrega</b><small>Pagas al recibir</small></span></label>
+        <label class="pago" id="opcion-en-linea"><input type="radio" name="metodo_pago" value="en_linea" disabled> <span><b>Tarjeta / pago en línea</b><small>Próximamente</small></span></label>
+      </fieldset>
+      <div class="total"><span>Total</span><strong id="total-pedido"></strong></div>
+      <p class="error" id="error-pedido" hidden></p>
+      <button class="btn btn-dorado ancho" id="confirmar">Confirmar pedido</button>
+    </form>
+  </div>
+
+  <!-- Confirmación -->
+  <div class="capa" id="capa-listo" hidden>
+    <div class="ficha confirmacion" role="dialog" aria-modal="true">
+      <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
+      <div class="sello">✓</div>
+      <h2>¡Pedido recibido!</h2>
+      <p id="texto-listo"></p>
+      <a class="btn btn-dorado" id="whatsapp-listo" target="_blank" rel="noopener" hidden>Enviar mi pedido por WhatsApp</a>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="logica.js"></script>
+  <script src="demo-catalogo.js"></script>
+  <script src="datos.js"></script>
+  <script src="tienda.js"></script>
+</body>
+</html>
