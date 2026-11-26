@@ -54,7 +54,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   ok(ahora.find((p) => p.id === bleu.id).stock === 3 && ahora.find((p) => p.id === asad.id).stock === 0, 'cancelar devuelve solo lo descontado');
   await assert.rejects(D.cambiarEstado(r.id, 'pendiente')); ok(true, 'cancelado no se reabre');
   // validaciones
-  await assert.rejects(D.crearPedido({ nombre: 'x', telefono: '', direccion: 'y', items: [{ perfume_id: 1, cantidad: 1 }] })); ok(true, 'falta teléfono');
+  ok((await D.crearPedido({ items: [{ perfume_id: 1, cantidad: 1 }] })).items.length === 1, 'pedido sin ningún dato del cliente se acepta');
   await assert.rejects(D.crearPedido({ nombre: 'x', telefono: '1', direccion: 'y', items: [] })); ok(true, 'pedido vacío');
   await assert.rejects(D.crearPedido({ nombre: 'x', telefono: '1', direccion: 'y', items: [{ perfume_id: 999, cantidad: 1 }] })); ok(true, 'perfume inexistente');
   await assert.rejects(D.crearPedido({ nombre: 'x', telefono: '1', direccion: 'y', items: [{ perfume_id: 1, cantidad: -3 }] })); ok(true, 'cantidad negativa');

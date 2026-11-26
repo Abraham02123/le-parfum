@@ -380,3 +380,9 @@ a.enlace-ficha { color: inherit; text-decoration: none; }
 .marcas-todas a { color: var(--suave); text-decoration: none; }
 .marcas-todas a:hover { color: var(--tinta); text-decoration: underline; }
 .marcas-todas small { color: #A59EA3; }
+
+/* Formulario de pedido: todo opcional, la venta se cierra por WhatsApp (26-nov) */
+.intro-pedido { margin: -4px 0 18px; color: var(--suave); font-size: 15px; max-width: 52ch; }
+.formulario .opcional { color: #A59EA3; font-size: 13px; }
+.pagos .leyenda { margin: -2px 0 4px; font-size: 13px; color: var(--suave); background: var(--niebla); border-radius: var(--r); padding: 8px 12px; }
+.omitir { align-self: center; margin-top: -4px; padding: 6px 4px; }

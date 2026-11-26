@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="estilos.css?v=d24098cf">
+  <link rel="stylesheet" href="estilos.css?v=45aa4481">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Le Parfum","description":"Perfumes originales árabes, de diseñador y de nicho. Pedidos por WhatsApp y pago contra entrega.","areaServed":"MX","currenciesAccepted":"MXN","paymentAccepted":"Efectivo, transferencia"}</script>
 </head>
 <body class="tienda">
@@ -184,21 +184,21 @@
   <div id="capa-pedido" class="capa" hidden>
     <div class="panel panel-form" role="dialog" aria-modal="true" aria-labelledby="titulo-pedido">
       <button class="cerrar" data-cerrar aria-label="Cerrar">×</button>
-      <h2 id="titulo-pedido">¿A dónde lo enviamos?</h2>
+      <h2 id="titulo-pedido">Haz tu pedido</h2>
+      <p class="intro-pedido">Tu pedido nos llega por WhatsApp. Ahí te pedimos la dirección y acordamos contigo la entrega y el pago. Lo de abajo es opcional: puedes dejarlo en blanco.</p>
       <form id="form-pedido" class="formulario">
-        <label>Nombre completo<input name="nombre" required autocomplete="name"></label>
-        <label>Teléfono o WhatsApp<input name="telefono" required inputmode="tel" autocomplete="tel"></label>
-        <label>Dirección<input name="direccion" required autocomplete="street-address"></label>
-        <label>Ciudad<input name="ciudad" autocomplete="address-level2"></label>
-        <label>Notas (opcional)<textarea name="notas" rows="2" placeholder="Referencias de la dirección, horario en que estás…"></textarea></label>
-        <fieldset class="pagos"><legend>Cómo pagas</legend>
-          <label class="pago"><input type="radio" name="metodo_pago" value="contra_entrega" checked><span><b>Contra entrega</b><small>Pagas en efectivo al recibir</small></span></label>
-          <label class="pago" id="opcion-transferencia" hidden><input type="radio" name="metodo_pago" value="transferencia"><span><b>Transferencia</b><small id="texto-transferencia"></small></span></label>
-          <label class="pago deshabilitada" id="opcion-en-linea"><input type="radio" name="metodo_pago" value="en_linea" disabled><span><b>Tarjeta en línea</b><small>Próximamente</small></span></label>
+        <label><span>Nombre <span class="opcional">(opcional)</span></span><input name="nombre" autocomplete="given-name" placeholder="¿Cómo te llamamos?"></label>
+        <fieldset class="pagos"><legend>¿Cómo prefieres pagar? <span class="opcional">(opcional)</span></legend>
+          <p class="leyenda">No se te cobra nada aquí: solo nos sirve para saber tu preferencia. La venta se completa por WhatsApp.</p>
+          <label class="pago"><input type="radio" name="metodo_pago" value="contra_entrega"><span><b>Efectivo al recibir</b><small>Pagas cuando el perfume llega a tus manos</small></span></label>
+          <label class="pago" id="opcion-transferencia"><input type="radio" name="metodo_pago" value="transferencia"><span><b>Transferencia</b><small id="texto-transferencia">Te pasamos los datos por WhatsApp</small></span></label>
+          <label class="pago" id="opcion-en-linea" hidden><input type="radio" name="metodo_pago" value="en_linea"><span><b>Tarjeta en línea</b><small>Te mandamos el enlace de pago por WhatsApp</small></span></label>
         </fieldset>
+        <label><span>Comentarios <span class="opcional">(opcional)</span></span><textarea name="notas" rows="2" placeholder="Una duda, si es para regalo, el tamaño que buscas…"></textarea></label>
         <p class="total">Total <b id="total-pedido"></b></p>
         <p id="error-pedido" class="error" hidden></p>
-        <button id="confirmar" class="btn btn-tinta ancho" type="submit">Confirmar pedido</button>
+        <button id="confirmar" class="btn btn-tinta ancho" type="submit">Hacer mi pedido</button>
+        <button id="omitir" class="enlace omitir" type="submit">Omitir esto y hacer mi pedido</button>
       </form>
     </div>
   </div>
@@ -231,7 +231,7 @@
   <script src="logica.js?v=210e470e"></script>
   <script src="demo-catalogo.js?v=35fc6577"></script>
   <script src="catalogo.js?v=6019b3fc"></script>
-  <script src="datos.js?v=fc7be664"></script>
-  <script src="tienda.js?v=a8c3361a"></script>
+  <script src="datos.js?v=bd9f99ce"></script>
+  <script src="tienda.js?v=3a375448"></script>
 </body>
 </html>

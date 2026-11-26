@@ -212,13 +212,16 @@
   // ── Pedido ──────────────────────────────────────────────────────────────
   function textoWhatsApp(r, datos) {
     const lin = r.items.map((l) => `- ${l.cantidad} × ${l.nombre}: ${dinero(l.precio * l.cantidad)}${l.por_encargo ? ` (${l.por_encargo} por encargo)` : ''}`);
-    return [`Hola, quiero hacer este pedido (${r.id}):`, ...lin, `Total: ${dinero(r.total)}`, '',
-      `Nombre: ${datos.nombre}`, `Teléfono: ${datos.telefono}`, `Dirección: ${datos.direccion}${datos.ciudad ? ', ' + datos.ciudad : ''}`,
-      `Pago: ${{ contra_entrega: 'contra entrega', transferencia: 'transferencia', en_linea: 'en línea' }[datos.metodo_pago] || datos.metodo_pago}`, datos.notas ? `Notas: ${datos.notas}` : ''].join('\n').trim();
+    // Solo lo que el cliente quiso poner: todo es opcional (26-nov); la dirección se pide por WhatsApp.
+    const pago = { contra_entrega: 'efectivo al recibir', transferencia: 'transferencia', en_linea: 'tarjeta en línea' }[datos.metodo_pago];
+    const extra = [datos.nombre && `Nombre: ${datos.nombre}`, pago && `Prefiero pagar con: ${pago}`, datos.notas && `Comentarios: ${datos.notas}`].filter(Boolean);
+    return [`Hola, quiero hacer este pedido (${r.id}):`, ...lin, `Total: ${dinero(r.total)}`, ...(extra.length ? ['', ...extra] : [])].join('\n').trim();
   }
   async function confirmar(e) {
     e.preventDefault();
-    const fd = new FormData(e.target), datos = Object.fromEntries(fd.entries());
+    // «Omitir esto y hacer mi pedido»: se manda solo el pedido, sin nada de lo escrito en el formulario.
+    const omitir = e.submitter && e.submitter.id === 'omitir';
+    const datos = omitir ? {} : Object.fromEntries([...new FormData(e.target).entries()].map(([k, v]) => [k, String(v).trim()]));
     const btn = $('#confirmar'); btn.disabled = true; $('#error-pedido').hidden = true;
     try {
       const r = await D.crearPedido({ ...datos, items: lineasValidas().map((l) => ({ perfume_id: l.perfume_id, cantidad: l.cantidad })) });
@@ -226,10 +229,10 @@
       cerrar('#capa-pedido');
       if (D.modo === 'whatsapp') {
         $('#titulo-listo').textContent = 'Falta un paso: envíalo';
-        $('#texto-listo').textContent = `Pulsa el botón y se abrirá WhatsApp con tu pedido ya escrito. Solo tienes que enviarlo. Total ${dinero(r.total)}, pagas al recibir.${enc ? ` ${enc} ${enc === 1 ? 'unidad va' : 'unidades van'} por encargo: te avisamos el plazo.` : ''}`;
+        $('#texto-listo').textContent = `Pulsa el botón y se abrirá WhatsApp con tu pedido ya escrito. Solo tienes que enviarlo; ahí te pedimos la dirección y acordamos la entrega y el pago. Total ${dinero(r.total)}.${enc ? ` ${enc} ${enc === 1 ? 'unidad va' : 'unidades van'} por encargo: te avisamos el plazo.` : ''}`;
       } else {
         $('#titulo-listo').textContent = '¡Pedido recibido!';
-        $('#texto-listo').textContent = `Tu pedido #${r.id} por ${dinero(r.total)} quedó registrado. Te contactaremos para coordinar la entrega; pagas al recibir.${enc ? ` ${enc} ${enc === 1 ? 'unidad va' : 'unidades van'} por encargo: te avisamos el plazo.` : ''}`;
+        $('#texto-listo').textContent = `Tu pedido #${r.id} por ${dinero(r.total)} quedó registrado. Te contactaremos para coordinar la entrega y el pago.${enc ? ` ${enc} ${enc === 1 ? 'unidad va' : 'unidades van'} por encargo: te avisamos el plazo.` : ''}`;
         carrito = []; guardarCarrito(); pintarCarrito();
         catalogo = await D.perfumes(); pintar();
       }
@@ -404,10 +407,8 @@
       const consulta = waLink('Hola, tengo una consulta sobre un perfume.');
       $('#wa-flotante').href = consulta; $('#wa-flotante').hidden = false;
       $('#pie-whatsapp').href = consulta; $('#pie-whatsapp').hidden = false;
-      $('#confirmar').textContent = D.modo === 'whatsapp' ? 'Continuar a WhatsApp' : 'Confirmar pedido';
     }
-    if (C.transferencia) { $('#opcion-transferencia').hidden = false; $('#texto-transferencia').textContent = C.transferencia; }
-    if (C.pagoEnLinea) { $('#opcion-en-linea').classList.remove('deshabilitada'); $('#opcion-en-linea input').disabled = false; }
+    if (C.pagoEnLinea) $('#opcion-en-linea').hidden = false;
     $('#pie-precios').hidden = !C.preciosReferencia;
     $('#faq-precios').hidden = !C.preciosReferencia;
     eventos();

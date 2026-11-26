@@ -37,7 +37,8 @@
 
     // ped = { nombre, telefono, direccion, ciudad, notas, metodo_pago, items:[{perfume_id, cantidad}] }
     async crearPedido(ped) {
-      for (const c of ['nombre', 'telefono', 'direccion']) if (!String(ped[c] || '').trim()) throw new Error('Falta ' + c);
+      // Con WhatsApp nada es obligatorio (26-nov): el cliente escribe desde su número y ahí se piden los datos.
+      if (modo === 'supabase') for (const c of ['nombre', 'telefono', 'direccion']) if (!String(ped[c] || '').trim()) throw new Error('Falta ' + c);
       if (modo === 'whatsapp') {
         // Sin base de datos no hay número correlativo ni inventario compartido: el pedido se arma aquí
         // (con los precios del catálogo, no los del carrito) y se manda por WhatsApp.

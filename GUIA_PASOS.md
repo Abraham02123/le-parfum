@@ -69,8 +69,8 @@ compruebo desde fuera que abre. Te mando el enlace para compartir.
 
 ## Paso 3 · Probarla desde tu móvil — 5 minutos tuyos
 
-**Qué haces tú:** abre el enlace en el móvil, agrega un perfume al carrito, «Hacer pedido», rellena con tus
-datos y confirma. Se abre WhatsApp con el pedido escrito: envíalo **a ti mismo** (o a otro número tuyo) y
+**Qué haces tú:** abre el enlace en el móvil, agrega un perfume al carrito, «Hacer el pedido». Prueba las dos formas: una con nombre y forma de pago, y otra con «Omitir esto y hacer mi
+pedido» (todo es opcional; la dirección la pides tú por WhatsApp). Se abre WhatsApp con el pedido escrito: envíalo **a ti mismo** (o a otro número tuyo) y
 mira que llega completo. Comparte el enlace por WhatsApp a alguien: debe salir la foto de vista previa.
 
 **Qué me escribes:** «llegó bien», o lo que viste raro (una captura vale más que una descripción).
