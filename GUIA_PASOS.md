@@ -105,7 +105,14 @@ con ella se puede cambiar la tienda.
 - precio **sin caja** y **con caja**;
 - **disponible**: con caja · sin caja · con y sin caja · no disponible;
 - **épocas del año**: toca 🌸 Primavera, ☀️ Verano, 🍂 Otoño o ❄️ Invierno (puede ser más de una);
-- **se ve en la tienda**: quítalo para esconder un perfume.
+Y arriba tienes tres pestañas:
+- **En la tienda**: los que se ven. En cada uno, **Archivar** (lo escondes un tiempo, guarda sus precios) o
+  **Quitar** (lo borras de la lista; siempre se puede volver a agregar).
+- **Archivados**: los escondidos. **Restaurar a la tienda** los vuelve a mostrar con sus precios de antes.
+- **+ Agregar**: escribe marca o nombre; salen los perfumes que existen (24.063), de los más conocidos a los
+  menos, con precio y épocas sugeridos. Pulsas **Agregar**, revisas precio y disponibilidad, y **Guardar**.
+  La foto, las notas, la descripción y su página las arma la computadora sola en unos 10 minutos
+  (tiene que estar prendida; si está apagada, aparece cuando la prendas).
 
 Pulsas **Guardar** y la tienda lo muestra en 1-2 minutos (la página de cada perfume también). Las épocas
 iniciales las calculé yo con los olores de cada perfume: revísalas cuando quieras, tú mandas.

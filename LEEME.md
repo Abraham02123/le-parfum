@@ -48,8 +48,21 @@ Por dentro: la tienda (`datos.js`) y las páginas fijas de cada perfume (`ficha.
 que alguien las abre (si no responde en 4 segundos o trae menos de la mitad de los perfumes, usan `catalogo.js`).
 Al guardar, `precios.js` baja la versión más reciente y solo reescribe las filas cambiadas, firmando como
 «Le Parfum <tienda@localhost>» (el repositorio es público: nunca un correo personal). `publicar.sh` trae esos
-cambios (`git pull`) antes de armar nada. `datos/armar_catalogo.py` nunca pisa filas que ya están: solo agrega
-perfumes nuevos. No cambiar la columna `id`; una fila con un id que no existe se ignora.
+cambios (`git pull`) antes de armar nada. No cambiar la columna `id`; una fila con un id que no existe se ignora.
+
+**Agregar, quitar y archivar (27-nov).** `precios.csv` decide QUÉ perfumes hay en la tienda:
+- **+ Agregar** (pestaña): busca entre los 24.063 perfumes de la fuente (`buscador_perfumes.json`, lo escribe
+  `armar_catalogo.py`) y agrega una fila con precio y épocas sugeridos y «no disponible» hasta que el dueño diga.
+- **Archivar**: `visible` = no. Deja de verse al instante y queda en la pestaña «Archivados» con sus precios.
+- **Quitar**: borra la fila (el historial de GitHub la guarda). Deja de verse al instante.
+- La tienda y las fichas esconden lo que no está en `precios.csv` o está archivado (`aplicarHoja(…, {soloHoja:true})`).
+- Un perfume **agregado** necesita foto, notas, descripción y página: los arma esta computadora.
+  `reconstruir.sh` (tarea programada **LeParfum_Reconstruir** cada 5 minutos, sin ventana, vía `reconstruir.vbs`)
+  mira si llegó un guardado desde el celular y, si llegó, corre `publicar.sh`, que llama a `datos/armar_catalogo.py`
+  (baja la foto que falte) y regenera las páginas. Registro: `datos/reconstruir.log`. Si la carpeta tiene cambios
+  sin publicar no toca nada; si falla deja `reconstruir.pendiente` y reintenta. **Si la computadora está apagada,
+  el agregado se ve recién cuando se prenda** (los precios, archivados y quitados no dependen de ella).
+- `armar_catalogo.py` ya NO añade filas a `precios.csv` (antes lo hacía y deshacía cada «quitar»).
 
 El panel (`admin.html`) descarga y sube la misma tabla en CSV, con las mismas columnas.
 
