@@ -86,6 +86,11 @@ como CSV → **Subir hoja corregida**. Antes de aplicar dice cuántos cambian y 
   1 semana». Se cambia en la hoja.
 - **Carrito**: no se vacía al pulsar «Abrir WhatsApp» (el cliente puede volver y corregir); se vacía con
   «Vaciar carrito». El mensaje ya no lleva código de pedido.
+- **Fotos en el pedido** (27-nov): WhatsApp no deja que una web adjunte fotos al mensaje ya escrito (`wa.me` solo
+  lleva texto). Por eso: (1) cada perfume del texto lleva «Foto: enlace a su página» (WhatsApp muestra la vista previa
+  del primer enlace); (2) botón «2. Enviar las fotos de mi pedido»: arma UNA imagen con foto, versión, cantidad,
+  precio y total; en el celular la comparte con el menú del teléfono (el cliente elige el chat de la tienda, que
+  ya abrió en el paso 1); en la computadora la descarga para adjuntarla con el clip.
 - **Modo base de datos (Supabase)**: todavía no conoce los dos precios ni la disponibilidad; usar `whatsapp`.
 
 ## Reglas que ya trae

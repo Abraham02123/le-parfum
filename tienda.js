@@ -221,13 +221,75 @@
   }
 
   // ── Pedido ──────────────────────────────────────────────────────────────
+  const urlFicha = (id) => new URL(`p/${id}.html`, location.href.split(/[?#]/)[0]).href;
   function textoWhatsApp(r, datos) {
-    const lin = r.items.map((l) => `- ${l.cantidad} × ${l.nombre}: ${dinero(l.precio * l.cantidad)}${l.por_encargo ? ` (no disponible ahora: ${L.PLAZO})` : ''}`);
+    // Debajo de cada perfume, el enlace a su página: WhatsApp no deja que una web adjunte fotos al mensaje (wa.me
+    // solo lleva texto), pero muestra la foto del primer enlace y las demás se ven con un toque (27-nov).
+    const lin = r.items.map((l) => `- ${l.cantidad} × ${l.nombre}: ${dinero(l.precio * l.cantidad)}${l.por_encargo ? ` (no disponible ahora: ${L.PLAZO})` : ''}\n  Foto: ${urlFicha(l.perfume_id)}`);
     // Solo lo que el cliente quiso poner: todo es opcional (26-nov); la dirección se pide por WhatsApp.
     const pago = { contra_entrega: 'efectivo al recibir', transferencia: 'transferencia', en_linea: 'tarjeta en línea' }[datos.metodo_pago];
     const extra = [datos.nombre && `Nombre: ${datos.nombre}`, pago && `Prefiero pagar con: ${pago}`, datos.notas && `Comentarios: ${datos.notas}`].filter(Boolean);
     // Sin el código del pedido (27-nov: «quita el código como este: (W2OK0O) en el mensaje»).
     return ['Hola, quiero hacer este pedido:', ...lin, `Total: ${dinero(r.total)}`, ...(extra.length ? ['', ...extra] : [])].join('\n').trim();
+  }
+  // ── Imagen del pedido (27-nov: «debe incluir las fotos de los perfumes») ─────────────────────────────
+  // Una sola imagen con la foto de cada perfume, versión, cantidad, precio y total. Se arma al abrir la ventana
+  // final para que al pulsar el botón se comparta al instante (el celular exige que compartir sea inmediato al toque).
+  const cargarImg = (src) => new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
+  function partir(ctx, texto, ancho) {
+    const lin = []; let a = '';
+    for (const w of String(texto).split(' ')) { const t = a ? a + ' ' + w : w; if (ctx.measureText(t).width > ancho && a) { lin.push(a); a = w; } else a = t; }
+    return a ? lin.concat(a) : lin;
+  }
+  async function imagenPedido(r) {
+    const porId = new Map(catalogo.map((p) => [p.id, p]));
+    const items = r.items.map((l) => ({ l, p: porId.get(l.perfume_id) }));
+    const fotos = await Promise.all(items.map(({ p }) => (p && p.imagen_url ? cargarImg(p.imagen_url) : null)));
+    const W = 1080, PAD = 48, FW = 210, FH = 280, FILA = FH + 40, CAB = 150, PIE = 170;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = CAB + items.length * FILA + PIE;
+    const c = cv.getContext('2d'), cuerpo = getComputedStyle(document.body).fontFamily;
+    const titulo = getComputedStyle(document.querySelector('.logo, h1') || document.body).fontFamily;
+    c.fillStyle = '#FBF8F4'; c.fillRect(0, 0, W, cv.height);
+    c.textBaseline = 'top'; c.fillStyle = '#3A2233'; c.font = `500 58px ${titulo}`;
+    c.fillText(C.nombre || 'Le Parfum', PAD, 44);
+    c.font = `30px ${cuerpo}`; c.fillStyle = '#6E6470'; c.fillText('Mi pedido', W - PAD - c.measureText('Mi pedido').width, 64);
+    items.forEach(({ l, p }, i) => {
+      const y = CAB + i * FILA;
+      c.fillStyle = '#E7E0E6'; c.fillRect(PAD, y - 20, W - 2 * PAD, 2);
+      c.fillStyle = '#FFFFFF'; c.fillRect(PAD, y + 10, FW, FH);
+      const f = fotos[i];
+      if (f) { const k = Math.min(FW / f.width, FH / f.height); c.drawImage(f, PAD + (FW - f.width * k) / 2, y + 10 + (FH - f.height * k) / 2, f.width * k, f.height * k); }
+      const x = PAD + FW + 36, ancho = W - x - PAD; let yy = y + 24;
+      c.fillStyle = '#6E6470'; c.font = `28px ${cuerpo}`; c.fillText(p ? p.marca : '', x, yy); yy += 42;
+      c.fillStyle = '#2A1A25'; c.font = `500 40px ${titulo}`;
+      for (const t of partir(c, p ? p.nombre : l.nombre, ancho).slice(0, 2)) { c.fillText(t, x, yy); yy += 50; }
+      c.font = `30px ${cuerpo}`; c.fillText(`${l.caja === 'con' ? 'Con caja' : 'Sin caja'} · ${l.cantidad} × ${dinero(l.precio)}`, x, yy + 6); yy += 48;
+      c.fillStyle = l.por_encargo ? '#7A4E6E' : '#1F7A4D'; c.font = `26px ${cuerpo}`;
+      c.fillText(l.por_encargo ? 'Te lo conseguimos en 2 días a 1 semana' : 'Disponible ahora', x, yy + 6);
+      c.fillStyle = '#2A1A25'; c.font = `600 36px ${cuerpo}`; const sub = dinero(l.precio * l.cantidad);
+      c.fillText(sub, W - PAD - c.measureText(sub).width, y + FH - 30);
+    });
+    const yt = CAB + items.length * FILA;
+    c.fillStyle = '#3A2233'; c.fillRect(PAD, yt - 20, W - 2 * PAD, 3);
+    c.font = `600 46px ${cuerpo}`; const tot = 'Total ' + dinero(r.total); c.fillText(tot, W - PAD - c.measureText(tot).width, yt + 10);
+    c.fillStyle = '#6E6470'; c.font = `26px ${cuerpo}`; c.fillText(new URL('.', location.href).href.replace(/^https?:\/\//, ''), PAD, yt + 100);
+    const blob = await new Promise((ok) => cv.toBlob(ok, 'image/jpeg', 0.88));
+    return blob && new File([blob], 'mi-pedido-le-parfum.jpg', { type: 'image/jpeg' });
+  }
+  let fotoPedido = null;
+  async function enviarFotos() {
+    const f = await fotoPedido;
+    if (!f) { aviso('No se pudo armar la imagen; el pedido escrito ya trae el enlace a cada foto'); return; }
+    // En el celular: menú de compartir del teléfono → WhatsApp → el chat de la tienda (ya abierto en el paso 1).
+    // En la computadora: se descarga y se adjunta con el clip de WhatsApp.
+    const tactil = matchMedia('(pointer: coarse)').matches;
+    if (tactil && navigator.canShare && navigator.canShare({ files: [f] })) {
+      try { await navigator.share({ files: [f] }); } catch (e) { if (e.name !== 'AbortError') aviso('No se pudo compartir: ' + e.message); }
+      return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    aviso('Foto descargada: adjúntala en el chat de WhatsApp con el clip');
   }
   async function confirmar(e) {
     e.preventDefault();
@@ -240,8 +302,9 @@
       const enc = r.items.reduce((s, l) => s + (l.por_encargo || 0), 0);
       cerrar('#capa-pedido');
       if (D.modo === 'whatsapp') {
-        $('#titulo-listo').textContent = 'Falta un paso: envíalo';
-        $('#texto-listo').textContent = `Pulsa el botón y se abrirá WhatsApp con tu pedido ya escrito. Solo tienes que enviarlo; ahí te pedimos la dirección y acordamos la entrega y el pago. Total ${dinero(r.total)}.${enc ? ` Lo que no está disponible ahora te lo conseguimos en 2 días a 1 semana.` : ''} Tu carrito se queda guardado por si quieres cambiar algo o volver a enviarlo.`;
+        $('#titulo-listo').textContent = 'Envía tu pedido por WhatsApp';
+        $('#texto-listo').textContent = `Total ${dinero(r.total)}.${enc ? ` Lo que no está disponible ahora te lo conseguimos en 2 días a 1 semana.` : ''} Primero envía tu pedido escrito; después, en el mismo chat, las fotos de tus perfumes. Ahí te pedimos la dirección y acordamos la entrega y el pago. Tu carrito se queda guardado por si quieres cambiar algo o volver a enviarlo.`;
+        fotoPedido = imagenPedido(r).catch(() => null);
       } else {
         $('#titulo-listo').textContent = '¡Pedido recibido!';
         $('#texto-listo').textContent = `Tu pedido #${r.id} por ${dinero(r.total)} quedó registrado. Te contactaremos para coordinar la entrega y el pago.${enc ? ` ${enc} ${enc === 1 ? 'unidad va' : 'unidades van'} por encargo: te avisamos el plazo.` : ''}`;
@@ -251,7 +314,8 @@
       const w = $('#whatsapp-listo');
       w.hidden = !WA;
       if (WA) w.href = waLink(textoWhatsApp(r, datos));
-      w.textContent = D.modo === 'whatsapp' ? 'Enviar mi pedido por WhatsApp' : 'Avisar por WhatsApp (opcional)';
+      w.textContent = D.modo === 'whatsapp' ? '1. Enviar mi pedido por WhatsApp' : 'Avisar por WhatsApp (opcional)';
+      $('#fotos-listo').hidden = !(WA && D.modo === 'whatsapp'); $('#fotos-listo').classList.remove('btn-whatsapp');
       abrir('#capa-listo');
     } catch (err) {
       $('#error-pedido').textContent = err.message.startsWith('Falta') ? 'Completa nombre, teléfono y dirección.' : 'No se pudo registrar: ' + err.message;
@@ -406,7 +470,9 @@
     $('#ir-pagar').addEventListener('click', () => { cerrar('#capa-carrito'); abrir('#capa-pedido'); });
     $('#form-pedido').addEventListener('submit', confirmar);
     // Enviar por WhatsApp NO vacía el carrito (27-nov): el cliente puede volver, cambiar algo o no haberlo mandado.
-    $('#whatsapp-listo').addEventListener('click', () => { if (D.modo === 'whatsapp') setTimeout(() => cerrar('#capa-listo'), 400); });
+    // La ventana ya no se cierra sola: al volver de WhatsApp queda el paso 2 (las fotos) a la vista y resaltado.
+    $('#whatsapp-listo').addEventListener('click', () => { if (D.modo === 'whatsapp') $('#fotos-listo').classList.add('btn-whatsapp'); });
+    $('#fotos-listo').addEventListener('click', enviarFotos);
     $('#vaciar-carrito').addEventListener('click', () => {
       if (!confirm('¿Quitar todos los perfumes de tu carrito?')) return;
       carrito = []; guardarCarrito(); pintarCarrito(); aviso('Carrito vacío');
