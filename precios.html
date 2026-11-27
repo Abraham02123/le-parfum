@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#FBFAF8">
+  <title>Precios · Le Parfum</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='11' y='3' width='10' height='6' rx='1.5' fill='%234A2340'/%3E%3Crect x='6' y='10' width='20' height='19' rx='5' fill='%23B97A2B'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="estilos.css?v=1c460fe6">
+  <style>
+    /* Editor de precios para el celular (27-nov): una columna, controles grandes, el botón de guardar siempre a mano. */
+    body { padding-bottom: 96px; }
+    .ed { max-width: 760px; margin: 0 auto; padding: 18px 16px 40px; }
+    .ed h1 { font: 400 30px/1.15 var(--serif); margin: 6px 0 4px; }
+    .ed .sub { color: var(--suave); margin: 0 0 18px; font-size: 15px; }
+    .clave { background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r); padding: 14px 16px; margin-bottom: 18px; }
+    .clave summary { cursor: pointer; font-weight: 500; }
+    .clave p { margin: 8px 0; font-size: 14px; color: var(--suave); }
+    .clave input { width: 100%; padding: 12px; border: 1px solid var(--linea); border-radius: var(--r); background: var(--papel); margin: 6px 0 10px; }
+    .clave .fila-btn { display: flex; gap: 10px; flex-wrap: wrap; }
+    .estado-clave { font-size: 14px; margin: 0 0 14px; }
+    .estado-clave.ok { color: var(--salvia); } .estado-clave.mal { color: var(--error); }
+    .buscar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .buscar input[type=search] { flex: 1 1 220px; padding: 12px; border: 1px solid var(--linea); border-radius: var(--r); background: var(--blanco); font-size: 16px; }
+    .buscar label { font-size: 14px; display: flex; gap: 6px; align-items: center; }
+    .cuenta { color: var(--suave); font-size: 14px; margin: 4px 0 12px; }
+    .item { background: var(--blanco); border: 1px solid var(--linea); border-radius: var(--r); padding: 12px 14px; margin-bottom: 10px; }
+    .item.cambiado { border-color: var(--ambar); box-shadow: inset 3px 0 0 var(--ambar); }
+    .item.oculto-tienda { opacity: .6; }
+    .item h2 { font: 500 16px/1.3 var(--sans); margin: 0 0 10px; }
+    .item h2 small { display: block; color: var(--suave); font-weight: 400; font-size: 13px; }
+    .campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } /* minmax(0,…): sin él, las casillas ensanchaban la página a 448 px en un celular de 390 y la barra de Guardar quedaba fuera */
+    .campos label { font-size: 13px; color: var(--suave); display: flex; flex-direction: column; gap: 4px; }
+    .campos input, .campos select { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px; border: 1px solid var(--linea); border-radius: var(--r); background: var(--papel); font-size: 16px; color: var(--tinta); }
+    .campos input.mal { border-color: var(--error); background: #FBEDEB; }
+    .campos .ancho2 { grid-column: 1 / -1; }
+    .epocas { display: flex; gap: 6px; flex-wrap: wrap; }
+    .epocas button { border: 1px solid var(--linea); background: var(--papel); border-radius: 999px; padding: 8px 12px; font-size: 14px; }
+    .epocas button[aria-pressed=true] { background: var(--oud); border-color: var(--oud); color: #fff; }
+    .visible { font-size: 14px; display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+    .mas { margin: 8px auto 0; display: flex; }
+    .barra { position: fixed; left: 0; right: 0; bottom: 0; background: var(--papel); border-top: 1px solid var(--linea);
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 10px; align-items: center; justify-content: center; z-index: 5; }
+    .barra .btn { flex: 1 1 auto; max-width: 420px; }
+    .barra .btn[disabled] { opacity: .45; cursor: default; }
+    .mensaje { max-width: 760px; margin: 0 auto 12px; padding: 12px 14px; border-radius: var(--r); font-size: 15px; }
+    .mensaje.ok { background: #E8F1EA; color: #234A31; } .mensaje.mal { background: #FBEDEB; color: #7A2419; } .mensaje.info { background: #F6EBD9; color: #6A4A14; }
+  </style>
+</head>
+<body>
+  <main class="ed">
+    <p><a href="./">← Volver a la tienda</a></p>
+    <h1>Precios y existencias</h1>
+    <p class="sub">Cambia precios, si está disponible, las épocas del año o si se ve en la tienda. Al guardar, la tienda se actualiza sola en 1 o 2 minutos.</p>
+
+    <details class="clave" id="caja-clave">
+      <summary id="titulo-clave">Clave para guardar</summary>
+      <p>Para guardar hace falta tu clave de GitHub (se crea una sola vez; los pasos están en GUIA_PASOS.md, «Cambiar precios desde el celular»). Se guarda solo en este teléfono, no se envía a nadie más que a GitHub.</p>
+      <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+      <div class="fila-btn">
+        <button class="btn btn-tinta" id="guardar-clave" type="button">Guardar en este teléfono</button>
+        <button class="btn btn-borde" id="olvidar-clave" type="button">Olvidar clave</button>
+      </div>
+    </details>
+    <p class="estado-clave" id="estado-clave" role="status"></p>
+
+    <div class="mensaje" id="mensaje" role="status" hidden></div>
+
+    <div class="buscar">
+      <input type="search" id="buscar" placeholder="Buscar por marca o nombre" aria-label="Buscar por marca o nombre">
+      <label><input type="checkbox" id="solo-cambios"> Solo los que cambié</label>
+    </div>
+    <p class="cuenta" id="cuenta">Cargando…</p>
+    <div id="lista"></div>
+    <button class="btn btn-borde mas" id="ver-mas" type="button" hidden>Ver más</button>
+  </main>
+  <div class="barra"><button class="btn btn-tinta" id="guardar" type="button" disabled>No hay cambios</button></div>
+
+  <script src="config.js?v=fdd3ccce"></script>
+  <script src="logica.js?v=687cea57"></script>
+  <script src="precios.js?v=eb51d2fd"></script>
+</body>
+</html>

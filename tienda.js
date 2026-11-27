@@ -16,7 +16,7 @@
     ['arabe', 'Árabes'], ['disenador', 'Diseñador'], ['nicho', 'Nicho'], ['ofertas', 'Ofertas'], ['favoritos', '♥ Guardados']];
 
   let catalogo = [], visibles = POR_PAGINA;
-  const f = { q: '', categoria: 'todos', marcas: [], familias: [], concentraciones: [], tamanos: [], min: '', max: '', soloDisponibles: false, orden: 'destacados' };
+  const f = { q: '', categoria: 'todos', marcas: [], familias: [], temporadas: [], concentraciones: [], tamanos: [], min: '', max: '', soloDisponibles: false, orden: 'destacados' };
   let carrito = [];
   try { carrito = JSON.parse(localStorage.getItem('tienda_carrito') || '[]'); } catch { carrito = []; }
   // Favoritos: el visitante marca con ♥ los que le gustan y los vuelve a encontrar en la pestaña «Guardados»,
@@ -48,7 +48,8 @@
 
   // ── Filtros ─────────────────────────────────────────────────────────────
   function casillas(id, campo, clave, valores, etiqueta = (v) => v) {
-    const cuenta = (v) => catalogo.filter((p) => String(p[clave]) === String(v)).length;
+    // Un perfume puede ir con varias épocas (p.temporadas es una lista): cuenta si la lista la incluye.
+    const cuenta = (v) => catalogo.filter((p) => (Array.isArray(p[clave]) ? p[clave].includes(v) : String(p[clave]) === String(v))).length;
     $(id).innerHTML = valores.map((v) => `<label class="casilla" data-texto="${esc(L.norm(etiqueta(v)))}"><input type="checkbox" value="${esc(v)}" data-campo="${campo}"
       ${f[campo].includes(String(v)) ? 'checked' : ''}><span>${esc(etiqueta(v))}</span><em>${cuenta(v)}</em></label>`).join('');
     $(id).closest('.grupo').hidden = valores.length < 2;
@@ -57,6 +58,8 @@
     const unicos = (k) => [...new Set(catalogo.map((p) => p[k]).filter((v) => v != null && v !== ''))];
     casillas('#f-marcas', 'marcas', 'marca', unicos('marca').sort((a, b) => a.localeCompare(b)));
     casillas('#f-familias', 'familias', 'familia', unicos('familia').sort());
+    casillas('#f-temporadas', 'temporadas', 'temporadas', L.TEMPORADAS.filter((t) => catalogo.some((p) => (p.temporadas || []).includes(t))),
+      (v) => `${L.EMOJI_TEMPORADA[v]} ${v}`);
     casillas('#f-concentraciones', 'concentraciones', 'concentracion', unicos('concentracion').sort());
     casillas('#f-tamanos', 'tamanos', 'ml', unicos('ml').sort((a, b) => a - b), (v) => v + ' ml');
     armarPestanas();
@@ -80,7 +83,7 @@
   function activos() {
     const chips = [];
     if (f.q) chips.push(['q', '', `«${f.q}»`]);
-    for (const c of ['familias', 'marcas', 'concentraciones', 'tamanos']) f[c].forEach((v) => chips.push([c, v, c === 'tamanos' ? v + ' ml' : v]));
+    for (const c of ['familias', 'temporadas', 'marcas', 'concentraciones', 'tamanos']) f[c].forEach((v) => chips.push([c, v, c === 'tamanos' ? v + ' ml' : c === 'temporadas' ? `${L.EMOJI_TEMPORADA[v]} ${v}` : v]));
     if (f.min !== '' || f.max !== '') chips.push(['precio', '', `${f.min !== '' ? dinero(+f.min) : '0'} a ${f.max !== '' ? dinero(+f.max) : 'más'}`]);
     if (f.soloDisponibles) chips.push(['disp', '', 'Solo disponibles ahora']);
     $('#activos').innerHTML = chips.map(([c, v, t]) => `<button class="quitar" data-quitar="${c}" data-valor="${esc(v)}" aria-label="Quitar filtro ${esc(t)}">${esc(t)}<span aria-hidden="true">×</span></button>`).join('');
@@ -97,6 +100,9 @@
     return `<button class="${clase}${h ? ' hay' : ''}" data-agregar="${p.id}" data-caja="${caja}" aria-label="${etiqueta(caja)}">
       <span class="op-caja">${t}</span><b class="op-precio">${dinero(L.precioDe(p, caja))}</b>${sub ? `<small>${sub(h)}</small>` : ''}</button>`;
   }).join('');
+  // Épocas del año en la tarjeta: solo los dibujitos (🌸 ☀️ 🍂 ❄️), con el texto para quien pasa el dedo o usa lector.
+  const epocas = (p) => (p.temporadas || []).length
+    ? `<span class="t-temporadas" title="${esc(L.textoTemporadas(p))}" aria-label="${esc(L.textoTemporadas(p))}">${p.temporadas.map((t) => L.EMOJI_TEMPORADA[t]).join(' ')}</span>` : '';
   function tarjeta(p) {
     const d = L.disponibilidad(p);
     const oferta = p.precio_antes > p.precio;
@@ -106,7 +112,7 @@
       <div class="datos-tarjeta">
         <p class="t-marca">${esc(p.marca)}</p>
         <h3><a class="enlace-ficha" href="p/${p.id}.html" data-ver="${p.id}">${esc(p.nombre)}</a></h3>
-        <p class="t-familia">${p.familia ? `<i style="--tono:${TONOS[p.familia] || '#B97A2B'}"></i>${esc(p.familia)}` : ''}</p>
+        <p class="t-familia">${p.familia ? `<i style="--tono:${TONOS[p.familia] || '#B97A2B'}"></i>${esc(p.familia)}` : ''}${epocas(p)}</p>
         <div class="t-precios">${opciones(p, 'opcion-precio', (caja) => `Agregar ${esc(nombreCompleto(p))} ${caja} caja al carrito`)}</div>
         <p class="disp ${d.clase}">${esc(d.texto)}</p>
       </div></article>`;
@@ -140,7 +146,7 @@
     const acordes = (p.acordes || []).slice(0, 5);
     const parecidos = catalogo.filter((x) => x.id !== p.id && x.familia === p.familia && x.genero === p.genero)
       .sort(L.ORDENES.populares).slice(0, 4);
-    const detalles = [p.concentracion, p.ml && p.ml + ' ml', PARA[p.genero], p.anio && `Lanzado en ${p.anio}`].filter(Boolean);
+    const detalles = [p.concentracion, p.ml && p.ml + ' ml', PARA[p.genero], L.textoTemporadas(p), p.anio && `Lanzado en ${p.anio}`].filter(Boolean);
     $('#ficha-contenido').innerHTML = `
       <div class="ficha-foto">${imagen(p, true)}${corazon(p)}</div>
       <div class="ficha-texto">
@@ -259,7 +265,7 @@
     } finally { btn.disabled = false; }
   }
 
-  // ── «¿Qué perfume me va?»: tres preguntas que se traducen a los mismos filtros del catálogo ─────
+  // ── «¿Qué perfume me va?»: cuatro preguntas que se traducen a los mismos filtros del catálogo ─────
   // No inventa nada: cada respuesta pone un filtro que el visitante después ve (y puede quitar) en el catálogo.
   const OLORES = [
     ['Flores', 'Rosa, jazmín, flor de azahar', ['Floral']],
@@ -277,7 +283,7 @@
     const r = (k) => { const v = en.map((p) => L.precioDe(p, k)); const a = Math.min(...v), b = Math.max(...v); return a === b ? dinero(a) : `${dinero(a)} a ${dinero(b)}`; };
     return `Sin caja ${r('sin')} · con caja ${r('con')}`;
   }
-  const quiz = { paso: 0, categoria: 'todos', familias: [], min: '', max: '' };
+  const quiz = { paso: 0, categoria: 'todos', familias: [], temporadas: [], min: '', max: '' };
   function pintarQuiz() {
     const familiasHay = new Set(catalogo.map((p) => p.familia));
     const pasos = [
@@ -285,6 +291,8 @@
         `<button class="opcion-quiz" data-q="categoria" data-v="${v}">${t}</button>`)],
       ['¿Qué olor te gusta más?', OLORES.map(([t, d, fs], i) => fs.some((x) => familiasHay.has(x))
         ? `<button class="opcion-quiz" data-q="olor" data-v="${i}"><b>${t}</b><small>${d}</small></button>` : '')],
+      ['¿Para qué época del año?', [...L.TEMPORADAS.map((t) => [`${L.EMOJI_TEMPORADA[t]} ${t}`, t]), ['Todo el año / me da igual', '']].map(([t, v]) =>
+        `<button class="opcion-quiz" data-q="temporada" data-v="${v}">${t}</button>`)],
       ['¿Cuánto quieres gastar?', PRESUPUESTOS.map((b, i) => { const r = b[1] === '' && b[2] === '' ? '' : rangoPresupuesto(b);
         return `<button class="opcion-quiz" data-q="precio" data-v="${i}"><b>${b[0]}</b>${r ? `<small>${r}</small>` : ''}</button>`; })],
     ];
@@ -297,20 +305,24 @@
   function responderQuiz(q, v) {
     if (q === 'categoria') quiz.categoria = v;
     if (q === 'olor') quiz.familias = OLORES[+v][2];
+    if (q === 'temporada') quiz.temporadas = v ? [v] : [];
     if (q === 'precio') [, quiz.min, quiz.max] = PRESUPUESTOS[+v];
-    if (quiz.paso < 2) { quiz.paso += 1; pintarQuiz(); return; }
+    if (quiz.paso < 3) { quiz.paso += 1; pintarQuiz(); return; }
     // Se aplica como filtros normales, para que el visitante vea por qué salen esos y pueda cambiarlos.
     const familias = quiz.familias.filter((x) => catalogo.some((p) => p.familia === x));
-    Object.assign(f, { q: '', categoria: quiz.categoria, marcas: [], familias, concentraciones: [], tamanos: [],
+    Object.assign(f, { q: '', categoria: quiz.categoria, marcas: [], familias, temporadas: quiz.temporadas.slice(), concentraciones: [], tamanos: [],
       min: String(quiz.min), max: String(quiz.max), soloDisponibles: false, orden: 'populares' });
-    let n = L.filtrar(catalogo, f).length, relajado = false;
-    if (!n && (f.min || f.max)) { f.min = f.max = ''; n = L.filtrar(catalogo, f).length; relajado = true; }
+    // Si la combinación no da ninguno, se suelta primero el precio y después la época (el olor es lo que más pesa).
+    let n = L.filtrar(catalogo, f).length, relajado = '';
+    if (!n && (f.min || f.max)) { f.min = f.max = ''; n = L.filtrar(catalogo, f).length; relajado = 'En ese precio'; }
+    if (!n && f.temporadas.length) { f.temporadas = []; n = L.filtrar(catalogo, f).length; relajado = relajado ? 'En ese precio y época' : 'Para esa época'; }
     $('#buscar').value = ''; $('#orden').value = 'populares'; $('#solo-disponibles').checked = false;
     $('#precio-min').value = f.min; $('#precio-max').value = f.max;
-    $$('#filtros input[type=checkbox][data-campo]').forEach((i) => (i.checked = i.dataset.campo === 'familias' && familias.includes(i.value)));
+    $$('#filtros input[type=checkbox][data-campo]').forEach((i) => (i.checked = (i.dataset.campo === 'familias' && familias.includes(i.value))
+      || (i.dataset.campo === 'temporadas' && f.temporadas.includes(i.value))));
     cerrar('#capa-quiz'); repintar();
     $('#catalogo').scrollIntoView({ behavior: 'smooth' });
-    aviso(relajado ? `En ese precio no hay ninguno: te muestro los ${n} de ese olor, los más populares primero`
+    aviso(relajado ? `${relajado} no hay ninguno: te muestro los ${n} de ese olor, los más populares primero`
       : `${n} perfumes van contigo, los más populares primero`);
   }
 
@@ -355,7 +367,7 @@
       $$('#f-marcas .casilla').forEach((c) => (c.hidden = q && !c.dataset.texto.includes(q)));
     });
     const limpiar = () => {
-      Object.assign(f, { q: '', categoria: 'todos', marcas: [], familias: [], concentraciones: [], tamanos: [], min: '', max: '', soloDisponibles: false });
+      Object.assign(f, { q: '', categoria: 'todos', marcas: [], familias: [], temporadas: [], concentraciones: [], tamanos: [], min: '', max: '', soloDisponibles: false });
       $('#buscar').value = ''; $('#precio-min').value = ''; $('#precio-max').value = ''; $('#solo-disponibles').checked = false;
       $$('#filtros input[type=checkbox]').forEach((i) => (i.checked = false));
       repintar();

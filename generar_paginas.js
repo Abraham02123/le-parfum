@@ -8,20 +8,21 @@ globalThis.window = globalThis;
 for (const f of ['config.js', 'logica.js', 'catalogo.js']) vm.runInThisContext(fs.readFileSync(path.join(__dirname, f), 'utf8'), { filename: f });
 const C = globalThis.TIENDA_CONFIG, L = globalThis.Logica;
 const BASE = (process.argv[2] || 'https://abraham02123.github.io/le-parfum/').replace(/\/?$/, '/');
-// Precios y disponibilidad: los de la hoja de Google si config.js la tiene (la misma que lee la tienda en vivo);
-// si no responde, los de catalogo.js. Así las páginas de cada perfume dicen lo mismo que la tienda al publicar.
+// Precios, disponibilidad y épocas: los de precios.csv (el archivo que el dueño edita desde precios.html, 27-nov),
+// el mismo que lee la tienda en vivo; si falta, los de catalogo.js. Así las páginas fijas dicen lo mismo que la
+// tienda al publicar, y ficha.js las vuelve a poner al día en el navegador si el dueño cambia algo después.
 let base = globalThis.CATALOGO.map((p) => L.normalizar({ ...p }));
 const urlHoja = L.urlHoja(C.hojaCatalogo);
 if (urlHoja) {
   try {
-    const texto = require('child_process').execFileSync(process.execPath, ['-e',
+    const texto = !/^https?:/i.test(urlHoja) ? fs.readFileSync(path.join(__dirname, urlHoja), 'utf8') : require('child_process').execFileSync(process.execPath, ['-e',
       'fetch(process.argv[1]).then(async (r) => { if (!r.ok) throw new Error("HTTP " + r.status); process.stdout.write(await r.text()); }).catch((e) => { console.error(e.message); process.exit(1); })', urlHoja],
       { encoding: 'utf8', timeout: 20000, stdio: ['ignore', 'pipe', 'pipe'] });
     const r = L.aplicarHoja(base, texto);
     if (r.coinciden < base.length / 2) throw new Error(`la hoja solo trae ${r.coinciden} de ${base.length} perfumes`);
     base = r.lista;
-    console.log(`hoja de Google: ${r.coinciden} perfumes, ${r.cambiados} con precio o disponibilidad distinta a catalogo.js`);
-  } catch (e) { console.warn('⚠ hoja de Google no leída, uso catalogo.js:', String(e.message).split('\n')[0]); }
+    console.log(`${urlHoja}: ${r.coinciden} perfumes, ${r.cambiados} con precio, disponibilidad o época distinta a catalogo.js`);
+  } catch (e) { console.warn(`⚠ ${urlHoja} no leído, uso catalogo.js:`, String(e.message).split('\n')[0]); }
 }
 const cat = base.filter((p) => p.visible !== false);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -59,10 +60,12 @@ ${extra}</head>
 `;
 const pie = `  <footer class="pie"><div><p class="pie-marca">${esc(C.nombre)}</p><p>Perfumes originales. Con caja o sin caja. Pedidos por WhatsApp.</p></div>
     <p class="pie-legal">Las fotos y marcas pertenecen a sus dueños y se muestran solo para identificar cada producto.</p></footer>
+  <script src="../config.js" defer></script><script src="../logica.js" defer></script><script src="../ficha.js" defer></script>
 </body>
 </html>
 `;
-const tarjetaMini = (x) => `<a class="mini" href="${x.id}.html"><img src="../${esc(x.imagen_url)}" alt="Frasco de ${esc(x.nombre)} de ${esc(x.marca)}" loading="lazy" width="375" height="500"><span class="mini-marca">${esc(x.marca)}</span><span class="mini-nombre">${esc(x.nombre)}</span><span class="mini-precio">desde ${dinero(x.precio)}</span></a>`;
+const datosVivos = (x) => `data-id="${x.id}" data-sin="${x.precio_sin_caja}" data-con="${x.precio_con_caja}" data-disp="${x.disponible}" data-temporadas="${esc((x.temporadas || []).join('/'))}"`;
+const tarjetaMini = (x) => `<a class="mini" href="${x.id}.html" ${datosVivos(x)}><img src="../${esc(x.imagen_url)}" alt="Frasco de ${esc(x.nombre)} de ${esc(x.marca)}" loading="lazy" width="375" height="500"><span class="mini-marca">${esc(x.marca)}</span><span class="mini-nombre">${esc(x.nombre)}</span><span class="mini-precio">desde ${dinero(x.precio)}</span></a>`;
 
 const carpeta = path.join(__dirname, 'p');
 fs.mkdirSync(carpeta, { recursive: true });
@@ -90,15 +93,15 @@ for (const p of cat) {
   const parecidos = cat.filter((x) => x.id !== p.id && x.marca !== p.marca && x.familia === p.familia && x.genero === p.genero).sort(porVotos).slice(0, 4);
   const html = cabeza({ titulo: `${nombre} · precio en México | ${C.nombre}`, desc, url, imagen: img, tipo: 'product',
     extra: `  <script type="application/ld+json">${JSON.stringify(ld).replace(/</g, '\\u003c')}</script>\n` }) + `
-  <main class="producto">
+  <main class="producto" ${datosVivos(p)}>
     <nav class="migas" aria-label="Estás en"><a href="../">Inicio</a> › <a href="marca-${slug(p.marca)}.html">${esc(p.marca)}</a> › <span>${esc(p.nombre)}</span></nav>
     <div class="producto-cuerpo">
       <div class="producto-foto"><img src="../${esc(p.imagen_url)}" alt="Frasco de ${esc(nombre)}" width="375" height="500"></div>
       <div class="producto-texto">
         <p class="f-marca"><a href="marca-${slug(p.marca)}.html">${esc(p.marca)}</a></p>
         <h1>${esc(p.nombre)}</h1>
-        <ul class="f-detalles">${detalles.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-        <div class="f-opciones">${[['con', 'Con caja'], ['sin', 'Sin caja']].map(([k, t]) => `<a class="opcion-ficha${L.hay(p, k) ? ' hay' : ''}" href="../#p=${p.id}"><span class="op-caja">${t}</span><b class="op-precio">${dinero(L.precioDe(p, k))}</b><small>${L.hay(p, k) ? 'Disponible ahora' : 'Te lo conseguimos en 2 días a 1 semana'}</small></a>`).join('')}</div>
+        <ul class="f-detalles">${detalles.map((x) => `<li>${esc(x)}</li>`).join('')}${(p.temporadas || []).length ? `<li class="f-temporadas">${esc(L.textoTemporadas(p))}</li>` : ''}</ul>
+        <div class="f-opciones">${[['con', 'Con caja'], ['sin', 'Sin caja']].map(([k, t]) => `<a class="opcion-ficha${L.hay(p, k) ? ' hay' : ''}" data-caja="${k}" href="../#p=${p.id}"><span class="op-caja">${t}</span><b class="op-precio">${dinero(L.precioDe(p, k))}</b><small>${L.hay(p, k) ? 'Disponible ahora' : 'Te lo conseguimos en 2 días a 1 semana'}</small></a>`).join('')}</div>
         ${C.preciosReferencia ? '<p class="f-nota-precio">Precio de referencia. Te confirmamos el precio final y la presentación por WhatsApp antes de enviar.</p>' : ''}
         <p class="disp ${d.clase}">${esc(d.texto)}</p>
         <div class="f-comprar"><a class="btn btn-tinta" href="../#p=${p.id}">Pedir este perfume</a></div>

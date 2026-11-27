@@ -31,8 +31,12 @@ window.TIENDA_CONFIG = {
   // Ponlo en false cuando hayas cargado tus precios reales.
   preciosReferencia: false,                      // 27-nov: los precios ya son los tuyos (con caja / sin caja)
 
-  // Hoja de Google con precios y disponibilidad, para cambiarlos desde el celular (27-nov).
-  // Pega aquí el enlace de la hoja (Compartir → «Cualquier persona con el enlace» → Lector).
-  // Vacío = la tienda usa los precios de catalogo.js. Columnas: id · marca · nombre · sin caja · con caja · disponible · visible
-  hojaCatalogo: '',
+  // Precios, disponibilidad y épocas del año que cambias desde el celular (27-nov): el archivo precios.csv de la
+  // tienda, que editas en precios.html (instrucciones en GUIA_PASOS.md). La tienda lo lee cada vez que alguien la abre.
+  // Columnas: id · marca · nombre · sin caja · con caja · disponible · temporadas · visible.
+  // Vacío = la tienda usa los precios de catalogo.js. (También acepta el enlace de una hoja de Google.)
+  hojaCatalogo: 'precios.csv',
+  // Dónde guarda precios.html los cambios: tu repositorio de GitHub (usuario/nombre). Si mueves la tienda a otra
+  // cuenta, cambia esto y crea una clave nueva para esa cuenta.
+  repoGithub: 'Abraham02123/le-parfum',
 };

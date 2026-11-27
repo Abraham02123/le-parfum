@@ -81,20 +81,34 @@ mira que llega completo. Comparte el enlace por WhatsApp a alguien: debe salir l
 
 ---
 
-## Paso 4 · Tus precios y disponibilidad, desde el celular — 10 minutos una vez
+## Paso 4 · Tus precios, disponibilidad y épocas, desde el celular — 10 minutos una vez
 
 Hoy cada perfume tiene precio sin caja y con caja por escalones (750/850/950 y 1.750/1.850/1.950/2.500) y
 **todos dicen «no disponible: te lo conseguimos en 2 días a 1 semana»** hasta que lo cambies.
 
-**Qué haces tú (una sola vez):**
-1. En tu escritorio está `Le_Parfum_catalogo.xlsx`. Súbelo a Google Drive.
-2. Ábrelo en Drive → **Archivo → Guardar como Hojas de cálculo de Google**.
-3. **Compartir** → «Acceso general» → **Cualquier persona con el enlace** → **Lector** → copiar enlace.
-4. Mándame ese enlace. Yo lo conecto a la tienda y publico (5 minutos).
+Ya no hace falta Google: la tienda trae su propia página para editar precios, **`precios.html`**.
 
-**Después, cada día:** abres la hoja en la app **Hojas de cálculo de Google** del celular, cambias el precio o
-eliges la disponibilidad de la lista (con caja · sin caja · con y sin caja · no disponible). La tienda lo
-muestra en cuanto un cliente la abre o recarga. No toques la columna `id` ni la primera fila.
+**Qué haces tú (una sola vez): crear tu clave de GitHub** — es como una llave que solo abre la tienda.
+1. En el celular, entra a **github.com** con tu cuenta (la de la tienda) → toca tu foto → **Settings**.
+2. Baja hasta **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+3. Nombre: `precios tienda`. Expiración: la más larga que te deje (o «No expiration»).
+4. **Repository access** → **Only select repositories** → elige **le-parfum**.
+5. **Permissions** → **Repository permissions** → **Contents** → **Read and write**. Nada más.
+6. **Generate token** y **copia** el texto que empieza con `github_pat_` (GitHub no lo vuelve a mostrar).
+7. Abre `https://abraham02123.github.io/le-parfum/precios.html` → «Clave para guardar» → pégalo →
+   **Guardar en este teléfono**. Debe decir «✓ Clave guardada». Agrega la página a tu pantalla de inicio.
+
+Si la clave se pierde o caduca: creas otra igual y la pegas. Nunca la mandes por chat ni a nadie (ni a mí):
+con ella se puede cambiar la tienda.
+
+**Después, cada día:** abres `precios.html`, buscas el perfume y cambias:
+- precio **sin caja** y **con caja**;
+- **disponible**: con caja · sin caja · con y sin caja · no disponible;
+- **épocas del año**: toca 🌸 Primavera, ☀️ Verano, 🍂 Otoño o ❄️ Invierno (puede ser más de una);
+- **se ve en la tienda**: quítalo para esconder un perfume.
+
+Pulsas **Guardar** y la tienda lo muestra en 1-2 minutos (la página de cada perfume también). Las épocas
+iniciales las calculé yo con los olores de cada perfume: revísalas cuando quieras, tú mandas.
 
 **Otras formas (si prefieres):**
 - **A, la más fácil:** mándame tu lista como la tengas (Excel, foto de una libreta, texto, PDF): perfume,

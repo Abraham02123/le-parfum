@@ -131,6 +131,7 @@ h1, h2, h3, h4 { margin: 0; font-weight: 400; }
 .enlace-ficha:hover { text-decoration: underline; text-underline-offset: 3px; }
 .t-familia { margin: 0 0 10px; font-size: 13px; color: var(--suave); display: flex; align-items: center; gap: 7px; }
 .t-familia i { width: 9px; height: 9px; border-radius: 50%; background: var(--tono); flex: none; }
+.t-temporadas { margin-left: auto; font-size: 12px; letter-spacing: 1px; white-space: nowrap; cursor: default; }
 .t-pie { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 /* Con caja / sin caja (27-nov): dos botones con su precio; el que hay ahora lleva un punto verde */
 .t-precios { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

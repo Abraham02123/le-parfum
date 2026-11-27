@@ -77,14 +77,14 @@
           <button class="btn btn-dorado" id="nuevo">+ Nuevo perfume</button>
         </div>
         <div class="barra-admin barra-hoja">
-          <button class="btn btn-borde" id="bajar-hoja" title="Abre en Excel o Google Sheets: cambia sin caja, con caja, disponible o visible y vuelve a subirla">Descargar hoja de precios y disponibilidad</button>
+          <button class="btn btn-borde" id="bajar-hoja" title="Abre en Excel: cambia sin caja, con caja, disponible, temporadas o visible y vuelve a subirla">Descargar hoja de precios y disponibilidad</button>
           <label class="btn btn-borde" for="subir-hoja">Subir hoja corregida</label>
           <input type="file" id="subir-hoja" accept=".csv,text/csv" hidden>
           <button class="btn btn-borde" id="bajar-catalogo" hidden>Descargar catalogo.js para publicar</button>
           <button class="btn btn-borde" id="reiniciar-local" hidden>Descartar mis cambios</button>
         </div>
-        <p class="nota-modo" id="nota-modo" hidden>Sin base de datos, lo que cambies aquí se guarda solo en este navegador. Para que lo vean
-          los clientes: «Descargar catalogo.js para publicar» y reemplaza ese archivo en la página (o mándamelo y lo subo yo).</p>
+        <p class="nota-modo" id="nota-modo" hidden>Sin base de datos, lo que cambies aquí se guarda solo en este navegador. Para cambiar
+          precios, disponibilidad o épocas del año que vean los clientes, usa <a href="precios.html">precios.html</a> (también desde el celular).</p>
         <table class="tabla">
           <thead><tr><th>Perfume</th><th class="opc">Categoría</th><th>Precio</th><th>Disponible</th><th class="opc">Visible</th><th></th></tr></thead>
           <tbody id="tabla-perfumes"></tbody>
@@ -105,6 +105,7 @@
         <label>Género<select name="genero"><option>mujer</option><option>hombre</option><option>unisex</option></select></label>
         <label>Tipo<select name="tipo"><option value="arabe">Árabe</option><option value="disenador">Diseñador</option><option value="nicho">Nicho</option></select></label>
         <label>Familia de aroma<input name="familia" list="lista-familias" placeholder="Dulce, Amaderada, Floral…"></label>
+        <label>Épocas del año<input name="temporadas" placeholder="Primavera / Verano / Otoño / Invierno"></label>
         <label>Concentración<select name="concentracion"><option>EDP</option><option>EDT</option><option>Parfum</option><option>Extrait</option><option>EDC</option></select></label>
         <label>Tamaño (ml)<input name="ml" type="number" min="1"></label>
         <label>Disponible<select name="disponible"><option value="no">No disponible</option><option value="con_caja">Con caja</option><option value="sin_caja">Sin caja</option><option value="ambas">Con y sin caja</option></select></label>
@@ -126,12 +127,12 @@
   <datalist id="lista-marcas"></datalist><datalist id="lista-familias"></datalist>
   <div id="toast" class="toast" hidden></div>
 
-  <script src="config.js?v=9023cdb1"></script>
+  <script src="config.js?v=fdd3ccce"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="logica.js?v=b2a840d6"></script>
+  <script src="logica.js?v=687cea57"></script>
   <script src="demo-catalogo.js?v=35fc6577"></script>
-  <script src="catalogo.js?v=27c7becd"></script>
-  <script src="datos.js?v=be40b402"></script>
-  <script src="admin.js?v=93c50158"></script>
+  <script src="catalogo.js?v=0568ff2e"></script>
+  <script src="datos.js?v=a3801dd1"></script>
+  <script src="admin.js?v=5343261f"></script>
 </body>
 </html>

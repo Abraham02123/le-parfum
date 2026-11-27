@@ -14,7 +14,7 @@ Costo: **0**. No se instala nada: son archivos sueltos que abre cualquier navega
 | modo | cuándo se activa | qué pasa con un pedido | inventario |
 |---|---|---|---|
 | **demostración** | `config.js` sin WhatsApp ni base de datos | se guarda solo en el navegador de quien lo hizo; arriba sale «Modo de prueba» | baja solo en ese navegador |
-| **WhatsApp** (recomendado para empezar) | `whatsapp` con tu número | al confirmar, al cliente se le abre WhatsApp con el pedido ya escrito y te lo manda | no baja solo: lo ajustas tú con la hoja de precios (abajo) |
+| **WhatsApp** (recomendado para empezar) | `whatsapp` con tu número | al confirmar, al cliente se le abre WhatsApp con el pedido ya escrito y te lo manda | no baja solo: lo ajustas tú con el editor de precios (abajo) |
 | **base de datos** (Supabase, gratis) | `supabaseUrl` y `supabaseKey` rellenos | queda guardado en tu panel, con su estado | baja solo con cada venta; cancelar lo devuelve |
 
 ## Publicarla (GitHub Pages, gratis)
@@ -26,26 +26,37 @@ La primera vez pide haber entrado a GitHub con `gh auth login`. Crea el sitio
 `https://TU-USUARIO.github.io/tienda-perfumes/`, que abre cualquiera desde el móvil o el ordenador.
 Cada vez que se vuelve a correr sube los cambios; la tienda se actualiza en 1-2 minutos.
 
-## Cambiar precios y disponibilidad desde el celular (hoja de Google)
+## Cambiar precios, disponibilidad y épocas desde el celular (`precios.html`)
 
-Cada perfume tiene dos precios (**sin caja** y **con caja**) y una disponibilidad: `con caja`, `sin caja`,
-`con y sin caja` o `no disponible` (la tienda dice «te lo conseguimos en 2 días a 1 semana»).
+Desde el 27-nov ya no hay hoja de Google (el dueño no tiene espacio en Google). Todo vive en **`precios.csv`**,
+dentro de la propia tienda: `id, marca, nombre, sin caja, con caja, disponible, temporadas, visible`.
 
-1. Subir `Le_Parfum_catalogo.xlsx` a Google Drive → abrirlo → **Archivo → Guardar como Hojas de cálculo de Google**.
-2. **Compartir → Cualquier persona con el enlace → Lector**. Copiar el enlace.
-3. Pegar ese enlace en `config.js` → `hojaCatalogo` y publicar (`bash publicar.sh`).
+- **Disponibilidad**: `con caja`, `sin caja`, `con y sin caja` o `no disponible` (la tienda dice «te lo conseguimos
+  en 2 días a 1 semana»).
+- **Temporadas** (épocas del año): una o varias de `Primavera / Verano / Otoño / Invierno` (o `todo el año`).
+  Las iniciales las calcula `datos/armar_catalogo.py` con los 5 olores principales de cada perfume: frescos y
+  cítricos → primavera y verano; vainilla, ámbar, cuero, tabaco → otoño e invierno; en medio → primavera y otoño;
+  floral → suma primavera. Es una estimación: lo que diga `precios.csv` manda.
 
-Desde ahí se edita en la app de Google Sheets del celular. La tienda lee la hoja **cada vez que alguien la abre**
-(si la hoja no responde en 4 segundos, o trae menos de la mitad de los perfumes, usa `catalogo.js`). Las páginas
-de cada perfume para Google se rehacen solo al publicar. No cambiar la columna `id` ni los títulos; una fila nueva
-se ignora (un perfume nuevo necesita su foto: se agrega con `datos/armar_catalogo.py`).
+**Cómo se edita:** la dirección de la tienda + `precios.html` (p. ej. `https://abraham02123.github.io/le-parfum/precios.html`).
+Busca el perfume, cambia lo que quieras y pulsa «Guardar N cambios». La página guarda `precios.csv` directo en
+GitHub (sin computadora) y la tienda lo muestra en 1-2 minutos. Necesita una **clave de GitHub** que se crea una
+sola vez (pasos en `GUIA_PASOS.md`, Paso 4); la clave queda solo en el navegador del teléfono, nunca en el código.
+Sin clave, la página deja ver pero no guardar.
 
-El panel (`admin.html`) descarga y sube la misma hoja en CSV, con las mismas columnas.
+Por dentro: la tienda (`datos.js`) y las páginas fijas de cada perfume (`ficha.js`) leen `precios.csv` cada vez
+que alguien las abre (si no responde en 4 segundos o trae menos de la mitad de los perfumes, usan `catalogo.js`).
+Al guardar, `precios.js` baja la versión más reciente y solo reescribe las filas cambiadas, firmando como
+«Le Parfum <tienda@localhost>» (el repositorio es público: nunca un correo personal). `publicar.sh` trae esos
+cambios (`git pull`) antes de armar nada. `datos/armar_catalogo.py` nunca pisa filas que ya están: solo agrega
+perfumes nuevos. No cambiar la columna `id`; una fila con un id que no existe se ignora.
+
+El panel (`admin.html`) descarga y sube la misma tabla en CSV, con las mismas columnas.
 
 ## Lo de antes: el panel
 
-Panel (`admin.html`) → «Perfumes e inventario» → **Descargar hoja de precios y existencias** → abrirla en
-Excel o Google Sheets → cambiar las columnas `precio`, `stock` (existencias) o `visible` (si/no) → guardar
+Panel (`admin.html`) → «Perfumes e inventario» → **Descargar hoja de precios y disponibilidad** → abrirla en
+Excel → cambiar las columnas `sin caja`, `con caja`, `disponible`, `temporadas` o `visible` (si/no) → guardar
 como CSV → **Subir hoja corregida**. Antes de aplicar dice cuántos cambian y qué filas tienen error.
 
 - En modo **base de datos** el cambio lo ven los clientes al instante.
@@ -81,9 +92,9 @@ como CSV → **Subir hoja corregida**. Antes de aplicar dice cuántos cambian y 
   formato liviano (6,5 MB las 500). Es práctica común en tiendas de perfumes; el pie de página lo aclara.
 - **Precios** (27-nov, pedido del dueño): por escalones según lo caro del perfume — sin caja 750 / 850 / 950,
   con caja 1.750 / 1.850 / 1.950, y 2.500 con caja para lo más fino (Tom Ford, Le Labo, Creed, Kilian…).
-  Lo fija `escalon()` en `datos/armar_catalogo.py`; se cambian perfume por perfume en la hoja de Google.
+  Lo fija `escalon()` en `datos/armar_catalogo.py`; se cambian perfume por perfume en `precios.html`.
 - **Disponibilidad**: todos en `no disponible` al empezar → la tienda dice «te lo conseguimos en 2 días a
-  1 semana». Se cambia en la hoja.
+  1 semana». Se cambia en `precios.html`.
 - **Carrito**: no se vacía al pulsar «Abrir WhatsApp» (el cliente puede volver y corregir); se vacía con
   «Vaciar carrito». El mensaje ya no lleva código de pedido.
 - Fotos en el pedido (27-nov): se probó y se QUITÓ a pedido del dueño («déjalo como estaba, sin imagen»). El pedido va solo como texto, con un solo botón. El código está en el historial de git (commit 477e091) por si se quiere volver.

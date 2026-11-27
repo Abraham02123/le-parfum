@@ -4,7 +4,7 @@
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const dinero = (n) => L.dinero(n, C);
-  // Las mismas palabras que la hoja de Google (27-nov); la hoja las vuelve a leer igual.
+  // Las mismas palabras que precios.csv (27-nov); la tienda las vuelve a leer igual.
   const DISP_TEXTO = { con_caja: 'con caja', sin_caja: 'sin caja', ambas: 'con y sin caja', no: 'no disponible' };
   const SIGUIENTE = { pendiente: ['confirmado', 'enviado', 'entregado', 'cancelado'], confirmado: ['enviado', 'entregado', 'cancelado'],
     enviado: ['entregado', 'cancelado'], entregado: ['cancelado'], cancelado: [] };
@@ -68,7 +68,7 @@
     $('#titulo-editar').textContent = p ? `${p.marca} · ${p.nombre}` : 'Nuevo perfume';
     if (p) for (const el of fm.elements) {
       if (!el.name) continue;
-      if (el.type === 'checkbox') el.checked = !!p[el.name]; else el.value = p[el.name] ?? '';
+      if (el.type === 'checkbox') el.checked = !!p[el.name]; else el.value = Array.isArray(p[el.name]) ? p[el.name].join(' / ') : p[el.name] ?? '';
     }
     $('#error-perfume').hidden = true; $('#capa-editar').hidden = false;
   }
@@ -101,6 +101,7 @@
       const fm = e.target, p = {};
       for (const el of fm.elements) if (el.name) p[el.name] = el.type === 'checkbox' ? el.checked : el.value.trim();
       if (p.id) p.id = +p.id; else delete p.id;
+      p.temporadas = L.leerTemporadas(p.temporadas) || [];
       for (const k of ['imagen_url', 'descripcion', 'notas_salida', 'notas_corazon', 'notas_fondo', 'familia', 'precio_antes', 'ml']) if (p[k] === '') p[k] = null;
       intentar(async () => { await D.guardarPerfume(p); $('#capa-editar').hidden = true; }, 'Guardado');
     };
@@ -133,20 +134,20 @@
     const local = D.modo !== 'supabase';
     $('#bajar-catalogo').hidden = !local; $('#reiniciar-local').hidden = !local; $('#nota-modo').hidden = D.modo !== 'whatsapp';
     $('#bajar-hoja').onclick = () => {
-      // Mismas columnas que la hoja de Google de la tienda: se puede subir a Drive tal cual.
-      const filas = [['id', 'marca', 'nombre', 'sin caja', 'con caja', 'disponible', 'visible']]
+      // Mismas columnas que precios.csv de la tienda.
+      const filas = [['id', 'marca', 'nombre', 'sin caja', 'con caja', 'disponible', 'temporadas', 'visible']]
         .concat(perfumes.map((p) => { const n = L.normalizar({ ...p });
-          return [n.id, n.marca, n.nombre, n.precio_sin_caja, n.precio_con_caja, DISP_TEXTO[n.disponible], n.visible ? 'si' : 'no']; }));
+          return [n.id, n.marca, n.nombre, n.precio_sin_caja, n.precio_con_caja, DISP_TEXTO[n.disponible], n.temporadas.join(' / '), n.visible ? 'si' : 'no']; }));
       bajar('precios_y_disponibilidad.csv', '﻿' + filas.map((f) => f.map(celda).join(';')).join('\r\n'), 'text/csv;charset=utf-8');
     };
     $('#subir-hoja').onchange = async (e) => {
       const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-      // Se lee igual que la hoja de Google (L.aplicarHoja): sin caja · con caja · disponible · visible.
+      // Se lee igual que precios.csv (L.aplicarHoja): sin caja · con caja · disponible · temporadas · visible.
       const r = L.aplicarHoja(perfumes, await f.text()), porId = new Map(perfumes.map((p) => [p.id, L.normalizar({ ...p })]));
       const malas = r.filas - r.coinciden > 0 ? [`${r.filas - r.coinciden} con un id que no existe`] : [], cambios = [];
       for (const n of r.lista) {
         const p = porId.get(n.id), c = { id: n.id };
-        for (const k of ['precio_sin_caja', 'precio_con_caja', 'precio', 'disponible', 'visible']) if (n[k] !== p[k]) c[k] = n[k];
+        for (const k of ['precio_sin_caja', 'precio_con_caja', 'precio', 'disponible', 'temporadas', 'visible']) if (JSON.stringify(n[k]) !== JSON.stringify(p[k])) c[k] = n[k];
         if (Object.keys(c).length > 1) cambios.push(c);
       }
       if (!cambios.length) return aviso(malas.length ? `Nada cambiado. Filas con error: ${malas.slice(0, 8).join(', ')}` : 'La hoja no trae cambios');

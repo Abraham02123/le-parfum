@@ -17,9 +17,11 @@
   const desdeArchivo = () => base.map((x, i) => L.normalizar({ id: x.id ?? i + 1, visible: true, destacado: false, stock: 0,
     creado: new Date(Date.now() - i * 864e5).toISOString(), ...x }));
 
-  // Precios y disponibilidad desde la hoja de Google (27-nov): el dueño la cambia desde el celular y la tienda la lee
-  // al abrirse. Si la hoja no responde en 4 s o trae menos de la mitad de los perfumes, se usa catalogo.js tal cual:
-  // la tienda nunca se queda en blanco por la hoja. Se lee UNA vez por visita (la misma lista para ver y para pedir).
+  // Precios, disponibilidad y épocas desde precios.csv (27-nov; antes una hoja de Google, el dueño no tiene espacio
+  // ahí): el dueño lo cambia desde el celular con precios.html y la tienda lo lee al abrirse. «?t=» pide siempre la
+  // copia del momento (sin eso, GitHub y el navegador pueden servir una de hasta 10 minutos antes).
+  // Si no responde en 4 s o trae menos de la mitad de los perfumes, se usa catalogo.js tal cual: la tienda nunca se
+  // queda en blanco por el archivo. Se lee UNA vez por visita (la misma lista para ver y para pedir).
   let vivoP = null;
   function vivo() {
     if (vivoP) return vivoP;
@@ -30,13 +32,13 @@
       const ctl = typeof AbortController === 'function' ? new AbortController() : null;
       const t = setTimeout(() => ctl && ctl.abort(), 4000);
       try {
-        const r = await fetch(url, { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+        const r = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
         if (!r.ok) throw new Error('respondió ' + r.status);
         const h = L.aplicarHoja(lista, await r.text());
         if (h.coinciden < lista.length / 2) throw new Error(`solo trae ${h.coinciden} de ${lista.length} perfumes`);
         Datos.fuente = 'hoja'; return h.lista;
       } catch (e) {
-        console.warn('No se pudo leer la hoja del catálogo; se usa catalogo.js. Motivo:', e.message);
+        console.warn('No se pudo leer ' + url + '; se usa catalogo.js. Motivo:', e.message);
         return lista;
       } finally { clearTimeout(t); }
     })();

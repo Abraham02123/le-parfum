@@ -8,7 +8,7 @@ vm.runInThisContext(fs.readFileSync(__dirname + '/config.js', 'utf8'), { filenam
 const NUM_REAL = String(globalThis.TIENDA_CONFIG.whatsapp || '').replace(/\D/g, '');
 assert.ok(NUM_REAL === '' || /^52\d{10}$/.test(NUM_REAL), 'el WhatsApp de config.js debe ser 52 + 10 dígitos: ' + NUM_REAL);
 // Las pruebas de abajo empiezan en modo demostración (sin número ni base de datos), sea cual sea config.js.
-globalThis.TIENDA_CONFIG = Object.assign({}, globalThis.TIENDA_CONFIG, { whatsapp: '', supabaseUrl: '', supabaseKey: '' });
+globalThis.TIENDA_CONFIG = Object.assign({}, globalThis.TIENDA_CONFIG, { whatsapp: '', supabaseUrl: '', supabaseKey: '', hojaCatalogo: '' });
 for (const f of ['logica.js', 'demo-catalogo.js', 'datos.js']) vm.runInThisContext(fs.readFileSync(__dirname + '/' + f, 'utf8'), { filename: f });
 const { Logica: L, Datos: D } = globalThis;
 let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
@@ -111,5 +111,27 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   ok(a1.precio_sin_caja === C5[1].precio_sin_caja && a1.precio_con_caja === C5[1].precio_con_caja && a1.visible === false, 'una celda mal escrita deja el precio como estaba');
   ok(h.coinciden === 2 && C5[0].precio_sin_caja !== 800, 'la hoja no modifica el catálogo original');
   ok(L.urlHoja('https://docs.google.com/spreadsheets/d/ABC_123/edit?usp=sharing') === 'https://docs.google.com/spreadsheets/d/ABC_123/gviz/tq?tqx=out:csv&headers=1', 'enlace de la hoja → CSV');
+  // Épocas del año (27-nov): se escriben a mano en precios.csv, varias a la vez, con o sin acento.
+  ok(L.leerTemporadas('primavera / VERANO').join() === 'Primavera,Verano' && L.leerTemporadas('otono, invierno').join() === 'Otoño,Invierno', 'épocas escritas de varias formas');
+  ok(L.leerTemporadas('todo el año').length === 4 && L.leerTemporadas('xyz') === null && L.leerTemporadas('') === null, 'todo el año / texto inválido');
+  const est = [{ id: 1, nombre: 'a', marca: 'm', temporadas: ['Verano'] }, { id: 2, nombre: 'b', marca: 'm', temporadas: ['Invierno', 'Otoño'] }, { id: 3, nombre: 'c', marca: 'm' }].map((p) => L.normalizar(p));
+  ok(L.filtrar(est, { temporadas: ['Otoño'] }).map((p) => p.id).join() === '2' && L.filtrar(est, { temporadas: ['Verano', 'Otoño'] }).length === 2 && L.filtrar(est, { temporadas: [] }).length === 3, 'filtro por época (cualquiera de las elegidas)');
+  ok(/primavera y verano/i.test(L.textoTemporadas({ temporadas: ['Primavera', 'Verano'] })) && /todo el año/i.test(L.textoTemporadas({ temporadas: L.TEMPORADAS })), 'texto de las épocas');
+  const ht = L.aplicarHoja(C5, `id,temporadas\n${p0.id},Invierno\n${C5[1].id},zzz\n`);
+  ok(ht.lista.find((p) => p.id === p0.id).temporadas.join() === 'Invierno' && JSON.stringify(ht.lista.find((p) => p.id === C5[1].id).temporadas) === JSON.stringify(L.normalizar({ ...C5[1] }).temporadas), 'precios.csv cambia la época; una mal escrita deja la que había');
+  ok(L.urlHoja('precios.csv') === 'precios.csv' && globalThis.TIENDA_CONFIG && fs.readFileSync(__dirname + '/config.js', 'utf8').includes("hojaCatalogo: 'precios.csv'"), 'la tienda lee precios.csv');
+  // El catálogo real: cada perfume con al menos una época válida, y precios.csv con exactamente los mismos perfumes.
+  const sb = { window: {} }; sb.globalThis = sb.window; vm.createContext(sb);
+  vm.runInContext(fs.readFileSync(__dirname + '/catalogo.js', 'utf8'), sb);
+  const real = sb.window.CATALOGO || sb.CATALOGO;
+  ok(real.length > 100 && real.every((p) => (p.temporadas || []).length >= 1 && p.temporadas.every((t) => L.TEMPORADAS.includes(t))), 'cada perfume del catálogo tiene su época');
+  const filasCsv = L.leerCsv(fs.readFileSync(__dirname + '/precios.csv', 'utf8'));
+  ok(filasCsv.map((r) => +r.id).sort((a, b) => a - b).join() === real.map((p) => p.id).sort((a, b) => a - b).join(), 'precios.csv trae los mismos perfumes que el catálogo');
+  const hr = L.aplicarHoja(real, fs.readFileSync(__dirname + '/precios.csv', 'utf8'));
+  ok(hr.coinciden === real.length && hr.lista.every((p) => p.precio_sin_caja >= 50 && p.temporadas.length), 'precios.csv se lee entero y sin precios rotos');
+  ok(fs.readFileSync(__dirname + '/index.html', 'utf8').includes('id="f-temporadas"'), 'la tienda tiene el filtro de época');
+  ok(fs.existsSync(__dirname + '/precios.html') && fs.existsSync(__dirname + '/precios.js') && fs.existsSync(__dirname + '/ficha.js'), 'editor del celular y refresco de páginas presentes');
+  const pj = fs.readFileSync(__dirname + '/precios.js', 'utf8');
+  ok(pj.includes("email: 'tienda@localhost'") && !/ghp_|github_pat_/.test(pj), 'el editor firma sin correo personal y no lleva ninguna clave dentro');
   console.log(`TODAS OK (${n} comprobaciones)`);
 })().catch((e) => { console.error('FALLA:', e.message); process.exit(1); });

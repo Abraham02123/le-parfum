@@ -9,7 +9,7 @@
 #
 # Uso: python -I armar_catalogo.py      (se puede correr cuantas veces haga falta; no toca precios ya editados
 #                                         en la base, solo reescribe catalogo.js y semilla.sql)
-import json, pathlib, re, datetime
+import csv, json, pathlib, re, datetime
 
 AQUI = pathlib.Path(__file__).parent
 RAIZ = AQUI.parent
@@ -124,6 +124,41 @@ def descripcion(p, x):
     return ' '.join(partes)
 
 cap = lambda s: s[:1].upper() + s[1:]
+
+# ── Épocas del año (27-nov, pedido del dueño: «primavera, verano, otoño o invierno; puede ser más de una») ─────
+# Se ESTIMAN de los 5 acordes principales (lo que más se siente): cada acorde tiene una «temperatura»: + fresco y
+# ligero (va con calor), − cálido y denso (va con frío). Se promedian dando más peso al primero.
+#   promedio ≥ +0,35 → Primavera y Verano · ≤ −0,35 → Otoño e Invierno · en medio → Primavera y Otoño (entretiempo).
+#   Un floral entre los 3 primeros suma Primavera salvo que el perfume sea muy cálido.
+# Revisado a mano en conocidos: Light Blue y Cool Water → primavera y verano; Black Opium y Tobacco Vanille → otoño
+# e invierno; Bleu de Chanel y Eros → primavera y otoño. Es una estimación: el dueño la cambia perfume por perfume
+# en precios.html (columna «temporadas» de precios.csv) y esa manda sobre esta.
+TEMP = {
+    'citrus': 2, 'fresh': 2, 'aquatic': 2, 'marine': 2, 'ozonic': 2, 'salty': 1.5, 'tropical': 1.5, 'green': 1.5,
+    'fresh spicy': 1, 'aromatic': 1, 'fruity': 1, 'coconut': 1, 'herbal': 1, 'lavender': 0.8,
+    'white floral': 0.5, 'floral': 0.5, 'yellow floral': 0.5, 'anis': 0.5, 'vodka': 0.5, 'metallic': 0.5,
+    'rose': 0.3, 'violet': 0.3, 'tuberose': 0, 'cannabis': 0, 'musky': 0, 'aldehydic': 0, 'iris': 0, 'powdery': -0.2,
+    'woody': -0.5, 'sweet': -0.8, 'soft spicy': -0.8, 'mossy': -0.8, 'lactonic': -0.8, 'cherry': -0.8,
+    'earthy': -1, 'patchouli': -1, 'almond': -1, 'nutty': -1, 'honey': -1.2,
+    'vanilla': -1.5, 'warm spicy': -1.5, 'amber': -1.5, 'leather': -1.5, 'cinnamon': -1.5, 'caramel': -1.5,
+    'balsamic': -1.5, 'animalic': -1.5, 'coffee': -1.5, 'cacao': -1.5, 'chocolate': -1.5, 'rum': -1.5, 'whiskey': -1.5,
+    'tobacco': -2, 'oud': -2, 'smoky': -2,
+}
+PESO = [1.0, 0.8, 0.6, 0.45, 0.35]
+FLORAL = {'floral', 'white floral', 'rose', 'yellow floral', 'violet', 'tuberose', 'iris'}
+EPOCAS = ['Primavera', 'Verano', 'Otoño', 'Invierno']
+sin_temperatura = set()
+
+
+def temporadas(acordes):
+    sin_temperatura.update(a for a in acordes[:5] if a not in TEMP)
+    a = [x for x in acordes[:5] if x in TEMP]
+    if not a: return EPOCAS[:]
+    w = PESO[:len(a)]
+    sc = sum(TEMP[x] * k for x, k in zip(a, w)) / sum(w)
+    t = {'Primavera', 'Verano'} if sc >= 0.35 else {'Otoño', 'Invierno'} if sc <= -0.35 else {'Primavera', 'Otoño'}
+    if set(acordes[:3]) & FLORAL and sc > -1.1: t.add('Primavera')
+    return [e for e in EPOCAS if e in t]
 salida, sin_foto, sin_familia = [], [], []
 hoy = datetime.date.today().isoformat()
 for orden, x in enumerate(sel):
@@ -144,13 +179,14 @@ for orden, x in enumerate(sel):
     ref = int(a_pesos(precio_de(x, t)))
     p['precio_sin_caja'], p['precio_con_caja'] = escalon(ref)
     p['precio'] = p['precio_sin_caja']   # el más barato: lo usan los filtros y el orden por precio
-    p['disponible'] = 'no'                # con_caja | sin_caja | ambas | no — se cambia en la hoja de Google
+    p['disponible'] = 'no'                # con_caja | sin_caja | ambas | no — se cambia en precios.html (precios.csv)
+    p['temporadas'] = temporadas(x['acordes'])
     p['_ref'] = ref
     salida.append(p)
 
 ver = datetime.datetime.now().strftime('%Y%m%d%H%M')
-js = ('// Catálogo de la tienda: lo genera datos/armar_catalogo.py (no editar a mano; para cambiar precios y disponibilidad\n'
-      '// la hoja de Google: config.js → hojaCatalogo). Precio sin caja / con caja por escalones (27-nov); disponible = no.\n'
+js = ('// Catálogo de la tienda: lo genera datos/armar_catalogo.py (no editar a mano; para cambiar precios, disponibilidad y\n'
+      '// épocas del año: precios.html → precios.csv, que manda sobre esto). Precio sin caja / con caja por escalones (27-nov).\n'
       f"window.CATALOGO_VERSION = '{ver}';\nwindow.CATALOGO = [\n"
       + ',\n'.join(json.dumps({k: v for k, v in p.items() if not k.startswith('_')}, ensure_ascii=False, separators=(',', ':')) for p in salida) + '\n];\n')
 (RAIZ / 'catalogo.js').write_text(js, encoding='utf-8')
@@ -162,7 +198,7 @@ def q(v):
     if isinstance(v, list): return 'array[' + ','.join(q(a) for a in v) + ']::text[]' if v else 'null'
     return "'" + str(v).replace("'", "''") + "'"
 cols = ['id', 'nombre', 'marca', 'genero', 'tipo', 'familia', 'concentracion', 'ml', 'precio', 'precio_antes', 'stock', 'descripcion',
-        'notas_salida', 'notas_corazon', 'notas_fondo', 'acordes', 'votos', 'anio', 'imagen_url', 'destacado', 'visible']
+        'notas_salida', 'notas_corazon', 'notas_fondo', 'acordes', 'votos', 'anio', 'imagen_url', 'destacado', 'visible', 'temporadas']
 sql = ['-- Carga los 500 perfumes del catálogo. Correr UNA vez, DESPUÉS de esquema.sql (SQL Editor de Supabase → Run).',
        '-- Si un perfume ya existe (mismo id) no se toca: así no se pisan precios o existencias ya editados.',
        'begin;',
@@ -172,6 +208,28 @@ sql[-1] += '\non conflict (id) do nothing;'
 sql += ["select setval(pg_get_serial_sequence('perfumes','id'), greatest(1000000, (select max(id) from perfumes)));", 'commit;']
 (RAIZ / 'supabase' / 'semilla.sql').write_text('\n'.join(sql) + '\n', encoding='utf-8')
 
+# ── precios.csv: lo que el dueño cambia desde el celular (precios.html) y la tienda lee al abrirse (27-nov) ──────
+# Se CREA si no existe. Si ya existe NO se toca lo escrito: solo se añaden al final los perfumes nuevos, para no
+# pisar precios, disponibilidad o épocas que el dueño ya cambió.
+DISP_TEXTO = {'con_caja': 'con caja', 'sin_caja': 'sin caja', 'ambas': 'con y sin caja', 'no': 'no disponible'}
+CAB = ['id', 'marca', 'nombre', 'sin caja', 'con caja', 'disponible', 'temporadas', 'visible']
+fila_csv = lambda p: [p['id'], p['marca'], p['nombre'], p['precio_sin_caja'], p['precio_con_caja'], DISP_TEXTO[p['disponible']],
+                      ' / '.join(p['temporadas']), 'si' if p['visible'] else 'no']
+ruta_csv = RAIZ / 'precios.csv'
+if ruta_csv.exists():
+    ya = {str(r['id']).strip() for r in csv.DictReader(ruta_csv.read_text(encoding='utf-8-sig').splitlines())}
+    nuevos = [p for p in salida if str(p['id']) not in ya]
+    if nuevos:
+        texto = ruta_csv.read_text(encoding='utf-8')
+        with ruta_csv.open('a', encoding='utf-8', newline='') as fh:
+            if texto and not texto.endswith('\n'): fh.write('\n')
+            csv.writer(fh, lineterminator='\n').writerows(fila_csv(p) for p in nuevos)
+    print(f'precios.csv: ya existía; {len(nuevos)} perfumes nuevos añadidos al final, lo demás intacto')
+else:
+    with ruta_csv.open('w', encoding='utf-8', newline='') as fh:
+        w = csv.writer(fh, lineterminator='\n'); w.writerow(CAB); w.writerows(fila_csv(p) for p in salida)
+    print('precios.csv: creado con', len(salida), 'perfumes')
+
 from collections import Counter
 print('perfumes:', len(salida), '· con foto:', len(salida) - len(sin_foto), '· sin foto:', len(sin_foto), '· sin familia:', sin_familia)
 print('familias:', dict(Counter(p['familia'] for p in salida)))
@@ -179,4 +237,6 @@ print('tipos:', dict(Counter(p['tipo'] for p in salida)), '· géneros:', dict(C
 print('precios (sin caja, con caja):', dict(sorted(Counter((p['precio_sin_caja'], p['precio_con_caja']) for p in salida).items())))
 print('concentración:', dict(Counter(p['concentracion'] for p in salida)))
 print('marcas a 95 por defecto:', sorted({x['marca_slug'] for x, p in zip(sel, salida) if p['_ref'] == a_pesos(95)}))
+print('épocas por perfume:', dict(Counter(len(p['temporadas']) for p in salida)), '·',
+      dict(Counter(e for p in salida for e in p['temporadas'])), '· acordes sin temperatura:', sorted(sin_temperatura) or 0)
 print('versión:', ver)

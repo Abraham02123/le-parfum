@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="estilos.css?v=43ff90b9">
+  <link rel="stylesheet" href="estilos.css?v=1c460fe6">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Le Parfum","description":"Perfumes originales árabes, de diseñador y de nicho. Pedidos por WhatsApp y pago contra entrega.","areaServed":"MX","currenciesAccepted":"MXN","paymentAccepted":"Efectivo, transferencia"}</script>
 </head>
 <body class="tienda">
@@ -43,7 +43,7 @@
         <h1 id="titulo-portada">Encuentra tu perfume por cómo huele</h1>
         <p id="lema" class="lema"></p>
         <p class="portada-ayuda">Toca una tira para ver los perfumes de esa familia. <span id="total-catalogo">500</span> perfumes, y todos se pueden pedir: si no lo tenemos, lo conseguimos.</p>
-        <button id="abrir-quiz" class="btn btn-borde quiz-boton">¿No sabes cuál elegir? Responde 3 preguntas</button>
+        <button id="abrir-quiz" class="btn btn-borde quiz-boton">¿No sabes cuál elegir? Responde 4 preguntas</button>
       </div>
       <div id="tiras" class="tiras" aria-label="Familias de aroma"></div>
     </section>
@@ -71,6 +71,7 @@
           <div class="filtros-cuerpo">
             <label class="interruptor"><input type="checkbox" id="solo-disponibles"><span>Solo disponibles ahora</span></label>
             <div class="grupo"><h3>Familia de aroma</h3><div id="f-familias" class="opciones"></div></div>
+            <div class="grupo"><h3>Época del año</h3><div id="f-temporadas" class="opciones"></div></div>
             <div class="grupo"><h3>Marca</h3>
               <input id="buscar-marca" class="buscar-marca" type="search" placeholder="Buscar marca" aria-label="Buscar marca">
               <div id="f-marcas" class="opciones larga"></div></div>
@@ -131,7 +132,7 @@
       <details><summary>¿Qué quiere decir «no disponible»?</summary><p>Que hoy no lo tenemos, pero te lo conseguimos en un plazo de 2 días a 1 semana, según disponibilidad, al hacer tu pedido por WhatsApp.</p></details>
       <details id="faq-precios"><summary>¿El precio que veo es el final?</summary><p>Es un precio de referencia. Antes de enviar te confirmamos por WhatsApp el precio final y la presentación (cuántos mililitros trae el frasco).</p></details>
       <details><summary>¿Hacen envíos a mi ciudad?</summary><p>Escríbenos por WhatsApp con tu ciudad y te decimos si llegamos, cuánto cuesta el envío y qué día te llega.</p></details>
-      <details><summary>No sé cuál elegir, ¿me ayudan?</summary><p>Responde <button class="enlace" data-abrir-quiz>3 preguntas rápidas</button> y te mostramos los que van contigo. También puedes buscar por una nota que te guste: vainilla, rosa, oud…</p></details>
+      <details><summary>No sé cuál elegir, ¿me ayudan?</summary><p>Responde <button class="enlace" data-abrir-quiz>4 preguntas rápidas</button> y te mostramos los que van contigo. También puedes buscar por una nota que te guste: vainilla, rosa, oud…</p></details>
     </section>
 
     <!--MARCAS-INICIO-->
@@ -228,12 +229,12 @@
 
   <div id="toast" class="toast" role="status" hidden></div>
 
-  <script src="config.js?v=9023cdb1"></script>
+  <script src="config.js?v=fdd3ccce"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="logica.js?v=b2a840d6"></script>
+  <script src="logica.js?v=687cea57"></script>
   <script src="demo-catalogo.js?v=35fc6577"></script>
-  <script src="catalogo.js?v=27c7becd"></script>
-  <script src="datos.js?v=be40b402"></script>
-  <script src="tienda.js?v=286a8e31"></script>
+  <script src="catalogo.js?v=0568ff2e"></script>
+  <script src="datos.js?v=a3801dd1"></script>
+  <script src="tienda.js?v=cc86af1c"></script>
 </body>
 </html>

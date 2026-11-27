@@ -57,6 +57,7 @@ $$;
 alter table perfumes add column if not exists acordes text[];   -- lo que más se siente, en orden (barras de la ficha)
 alter table perfumes add column if not exists votos   int;      -- solo para ordenar por popularidad; no se muestra
 alter table perfumes add column if not exists anio    int;      -- año de lanzamiento
+alter table perfumes add column if not exists temporadas text[]; -- épocas del año: Primavera, Verano, Otoño, Invierno (27-nov)
 alter table pedidos drop constraint if exists pedidos_metodo_pago_check;
 alter table pedidos add constraint pedidos_metodo_pago_check check (metodo_pago in ('contra_entrega','transferencia','en_linea'));
 

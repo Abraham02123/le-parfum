@@ -26,7 +26,7 @@
     let t = cache.get(p);
     if (!t) {
       t = norm([p.nombre, p.marca, p.familia, p.genero, p.tipo === 'arabe' ? 'arabe' : p.tipo, p.concentracion,
-        p.notas_salida, p.notas_corazon, p.notas_fondo, (p.acordes || []).join(' ')].join(' '));
+        p.notas_salida, p.notas_corazon, p.notas_fondo, (p.acordes || []).join(' '), (p.temporadas || []).join(' ')].join(' '));
       cache.set(p, t);
     }
     return t;
@@ -60,7 +60,8 @@
   function normalizar(p) {
     const sin = +p.precio_sin_caja > 0 ? +p.precio_sin_caja : +p.precio || 0;
     const con = +p.precio_con_caja > 0 ? +p.precio_con_caja : sin;
-    return Object.assign(p, { precio_sin_caja: sin, precio_con_caja: con, precio: Math.min(sin, con), disponible: estado(p) });
+    const temporadas = Array.isArray(p.temporadas) ? p.temporadas : leerTemporadas(p.temporadas) || [];
+    return Object.assign(p, { precio_sin_caja: sin, precio_con_caja: con, precio: Math.min(sin, con), disponible: estado(p), temporadas });
   }
   const PLAZO = 'te lo conseguimos en 2 días a 1 semana';
 
@@ -75,7 +76,8 @@
     disponibles: (a, b) => (hayAlgo(b) - hayAlgo(a)) || a.nombre.localeCompare(b.nombre),
   };
 
-  // f = { q, categoria, marcas:[], familias:[], concentraciones:[], tamanos:[], min, max, soloDisponibles, orden }
+  // f = { q, categoria, marcas:[], familias:[], temporadas:[], concentraciones:[], tamanos:[], min, max, soloDisponibles, orden }
+  // temporadas: sale el perfume si va con ALGUNA de las épocas marcadas (marcar Verano e Invierno = los de una o la otra).
   function filtrar(lista, f = {}) {
     const en = (arr, v) => !arr || !arr.length || arr.includes(v);
     const r = lista.filter((p) =>
@@ -84,6 +86,7 @@
         (f.categoria === 'ofertas' && p.precio_antes > p.precio)) &&
       en(f.marcas, p.marca) && en(f.familias, p.familia) && en(f.concentraciones, p.concentracion) &&
       en(f.tamanos, String(p.ml)) &&
+      (!f.temporadas || !f.temporadas.length || (p.temporadas || []).some((t) => f.temporadas.includes(t))) &&
       (f.min == null || f.min === '' || p.precio >= +f.min) &&
       (f.max == null || f.max === '' || p.precio <= +f.max) &&
       (!f.soloDisponibles || hayAlgo(p)));
@@ -157,6 +160,23 @@
     if (t.includes('con')) return 'con_caja';
     return null;
   }
+  // Épocas del año (27-nov). Se leen de palabras: «Primavera / Verano», «otoño, invierno», «todo el año».
+  const TEMPORADAS = ['Primavera', 'Verano', 'Otoño', 'Invierno'];
+  const EMOJI_TEMPORADA = { Primavera: '🌸', Verano: '☀️', Otoño: '🍂', Invierno: '❄️' };
+  function leerTemporadas(v) {
+    const t = norm(Array.isArray(v) ? v.join(' ') : v);
+    if (!t.trim()) return null;
+    if (/todo el ano|todas/.test(t)) return TEMPORADAS.slice();
+    const r = TEMPORADAS.filter((n) => t.includes(norm(n)));
+    return r.length ? r : null;
+  }
+  // «Ideal para primavera y verano» · «Para todo el año» (ficha de la tienda y páginas de cada perfume).
+  function textoTemporadas(p) {
+    const t = (p.temporadas || []).map((x) => x.toLowerCase());
+    if (!t.length) return '';
+    if (t.length === 4) return 'Para todo el año';
+    return 'Ideal para ' + (t.length > 1 ? t.slice(0, -1).join(', ') + ' y ' + t[t.length - 1] : t[0]);
+  }
   // Aplica la hoja sobre el catálogo, perfume por perfume (por su número «id»). Lo que la hoja no trae o trae mal
   // (precio vacío o absurdo) se queda como estaba: una celda mal escrita no rompe la tienda.
   function aplicarHoja(lista, texto) {
@@ -166,24 +186,28 @@
       const p = normalizar({ ...p0 }), r = porId.get(String(p.id));
       if (!r) return p;
       coinciden++;
-      const antes = JSON.stringify([p.precio_sin_caja, p.precio_con_caja, p.disponible, p.visible]);
+      const antes = JSON.stringify([p.precio_sin_caja, p.precio_con_caja, p.disponible, p.visible, p.temporadas]);
       const sin = pesos(r.sin_caja ?? r.precio_sin_caja), con = pesos(r.con_caja ?? r.precio_con_caja);
       if (sin >= 50 && sin <= 500000) p.precio_sin_caja = sin;
       if (con >= 50 && con <= 500000) p.precio_con_caja = con;
       const d = leerDisponible(r.disponible ?? r.disponibilidad); if (d) p.disponible = d;
+      const te = leerTemporadas(r.temporadas ?? r.temporada ?? r.epoca); if (te) p.temporadas = te;
       const vi = norm(r.visible ?? r.mostrar).trim();
       if (['no', '0', 'false', 'oculto', 'ocultar'].includes(vi)) p.visible = false;
       else if (['si', '1', 'true', 'x', 'mostrar'].includes(vi)) p.visible = true;
       normalizar(p);
-      if (JSON.stringify([p.precio_sin_caja, p.precio_con_caja, p.disponible, p.visible]) !== antes) cambiados++;
+      if (JSON.stringify([p.precio_sin_caja, p.precio_con_caja, p.disponible, p.visible, p.temporadas]) !== antes) cambiados++;
       return p;
     });
     return { lista: nueva, coinciden, cambiados, filas: porId.size };
   }
-  // El enlace que da Google al compartir la hoja → la dirección que devuelve sus datos como CSV.
+  // De dónde se leen precios, disponibilidad y épocas. Desde el 27-nov es «precios.csv», un archivo de la propia
+  // tienda (el dueño no tiene espacio en Google): se devuelve tal cual. Sigue aceptando el enlace de una hoja de
+  // Google (→ la dirección que devuelve sus datos como CSV) por si algún día se vuelve a usar.
   function urlHoja(s) {
     s = String(s || '').trim();
     if (!s) return '';
+    if (!/^https?:/i.test(s) && /[.]csv$/i.test(s)) return s;
     if (/output=csv|tqx=out:csv/.test(s)) return s;
     const pub = s.match(/\/spreadsheets\/d\/e\/([\w-]+)/);
     if (pub) return `https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?output=csv`;
@@ -192,5 +216,6 @@
   }
 
   g.Logica = { norm, distancia, coincide, filtrar, disponibilidad, dinero, repartirPedido, ORDENES,
-    normalizar, hay, hayAlgo, precioDe, PLAZO, leerCsv, aplicarHoja, urlHoja, pesos, leerDisponible };
+    normalizar, hay, hayAlgo, precioDe, PLAZO, leerCsv, aplicarHoja, urlHoja, pesos, leerDisponible,
+    TEMPORADAS, EMOJI_TEMPORADA, leerTemporadas, textoTemporadas };
 })(typeof window !== 'undefined' ? window : globalThis);

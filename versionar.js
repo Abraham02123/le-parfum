@@ -10,7 +10,7 @@ const crypto = require('crypto');
 const R = __dirname;
 
 const piezas = ['estilos.css', 'admin.css', 'p/pagina.css', 'config.js', 'logica.js', 'datos.js',
-  'demo-catalogo.js', 'catalogo.js', 'tienda.js', 'admin.js'].filter((f) => fs.existsSync(path.join(R, f)));
+  'demo-catalogo.js', 'catalogo.js', 'tienda.js', 'admin.js', 'ficha.js', 'precios.js'].filter((f) => fs.existsSync(path.join(R, f)));
 const marca = {};
 for (const f of piezas) {
   marca[path.basename(f)] = crypto.createHash('md5').update(fs.readFileSync(path.join(R, f))).digest('hex').slice(0, 8);
@@ -19,7 +19,7 @@ const nombres = Object.keys(marca).map((b) => b.replace(/[.]/g, '[.]')).join('|'
 // Solo referencias dentro de href="…" o src="…": la pieza va justo después de la comilla o de una barra.
 const patron = new RegExp(`(["/])(${nombres})(?:[?]v=[0-9a-f]+)?"`, 'g');
 
-const paginas = ['index.html', 'admin.html', '404.html',
+const paginas = ['index.html', 'admin.html', '404.html', 'precios.html',
   ...fs.readdirSync(path.join(R, 'p')).filter((f) => f.endsWith('.html')).map((f) => 'p/' + f)]
   .filter((f) => fs.existsSync(path.join(R, f)));
 let cambiadas = 0, referencias = 0;
@@ -30,7 +30,7 @@ for (const f of paginas) {
   if (despues !== antes) { fs.writeFileSync(ruta, despues); cambiadas++; }
 }
 // Comprobación: la tienda y su panel tienen que quedar con TODAS sus piezas marcadas.
-for (const f of ['index.html', 'admin.html']) {
+for (const f of ['index.html', 'admin.html', 'precios.html']) {
   const s = fs.readFileSync(path.join(R, f), 'utf8');
   const sinMarca = s.match(/(?:href|src)="[^"?]+[.](?:css|js)"/g);
   if (sinMarca) throw new Error(`${f}: piezas sin marca de versión: ${sinMarca.join(', ')}`);

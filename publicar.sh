@@ -18,6 +18,19 @@ if ! grep -Eq "whatsapp: *'[^']*[0-9]" config.js; then
   echo "⚠️  config.js no tiene número de WhatsApp: los clientes verán «Modo de prueba» y sus pedidos NO te llegarán."
 fi
 
+# Subir con la sesión de `gh`, no con el gestor de contraseñas de Windows: ese abre una ventana y el guion
+# se queda esperando sin decir nada (pasó el 26-nov, 7 minutos colgado). Solo afecta a esta carpeta.
+if [ "$(git config --local --get-all credential.https://github.com.helper | tail -1)" != '!gh auth git-credential' ]; then
+  git config --local --replace-all credential.https://github.com.helper ""
+  git config --local --add credential.https://github.com.helper '!gh auth git-credential'
+fi
+
+# Traer primero lo que el dueño guardó desde el celular (precios.html sube precios.csv directo a GitHub, 27-nov):
+# sin esto, publicar desde la computadora chocaría con esos cambios o armaría las páginas con precios viejos.
+if git remote get-url origin >/dev/null 2>&1; then
+  git pull -q --rebase --autostash origin "$(git branch --show-current)"
+fi
+
 # Una página fija por perfume y por marca (para que Google las encuentre y la vista previa al compartir lleve su foto).
 node generar_paginas.js "$URL"
 node pruebas.js            # si una comprobación falla, no se publica nada
@@ -33,13 +46,6 @@ grep -q 'og:url' index.html || sed -i "s#<meta property=\"og:type\" content=\"we
 # El repositorio es público: ningún commit puede llevar un correo personal (cualquiera lo leería en GitHub).
 git config user.name >/dev/null || git config user.name "Tienda de perfumes"
 git config user.email >/dev/null || git config user.email "tienda@localhost"
-
-# Subir con la sesión de `gh`, no con el gestor de contraseñas de Windows: ese abre una ventana y el guion
-# se queda esperando sin decir nada (pasó el 26-nov, 7 minutos colgado). Solo afecta a esta carpeta.
-if [ "$(git config --local --get-all credential.https://github.com.helper | tail -1)" != '!gh auth git-credential' ]; then
-  git config --local --replace-all credential.https://github.com.helper ""
-  git config --local --add credential.https://github.com.helper '!gh auth git-credential'
-fi
 
 git add -A
 git diff --cached --quiet || git commit -q -m "Publicar tienda $(date '+%Y-%m-%d %H:%M')"
