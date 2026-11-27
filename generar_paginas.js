@@ -18,7 +18,7 @@ if (urlHoja) {
     const texto = !/^https?:/i.test(urlHoja) ? fs.readFileSync(path.join(__dirname, urlHoja), 'utf8') : require('child_process').execFileSync(process.execPath, ['-e',
       'fetch(process.argv[1]).then(async (r) => { if (!r.ok) throw new Error("HTTP " + r.status); process.stdout.write(await r.text()); }).catch((e) => { console.error(e.message); process.exit(1); })', urlHoja],
       { encoding: 'utf8', timeout: 20000, stdio: ['ignore', 'pipe', 'pipe'] });
-    const r = L.aplicarHoja(base, texto);
+    const r = L.aplicarHoja(base, texto, { soloHoja: true });
     if (r.coinciden < base.length / 2) throw new Error(`la hoja solo trae ${r.coinciden} de ${base.length} perfumes`);
     base = r.lista;
     console.log(`${urlHoja}: ${r.coinciden} perfumes, ${r.cambiados} con precio, disponibilidad o época distinta a catalogo.js`);

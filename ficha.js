@@ -19,7 +19,9 @@
   fetch(destino + (destino.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' })
     .then((r) => { if (!r.ok) throw new Error('respondió ' + r.status); return r.text(); })
     .then((texto) => {
-      const { lista } = L.aplicarHoja(nodos.map(desdeNodo), texto);
+      // soloHoja: si el dueño quitó o archivó el perfume, la página lo dice en vez de seguir vendiéndolo (27-nov).
+      // Solo si la hoja trae algún perfume de esta página: una hoja vacía o rota no esconde nada.
+      const h = L.aplicarHoja(nodos.map(desdeNodo), texto, { soloHoja: true }), lista = h.coinciden ? h.lista : nodos.map(desdeNodo);
       lista.forEach((p, i) => {
         const el = nodos[i];
         if (!(p.precio > 0)) return; // nunca pintar un precio en cero
@@ -29,6 +31,12 @@
     .catch((e) => console.warn('No se pudo leer ' + destino + '; la página muestra los precios de su publicación. Motivo:', e.message));
 
   function pintarProducto(el, p) {
+    if (p.visible === false) {   // quitado o archivado por el dueño después de publicar esta página
+      el.querySelectorAll('.f-opciones, .f-comprar, .f-nota-precio').forEach((x) => { x.hidden = true; });
+      const disp = el.querySelector('.disp');
+      if (disp) { disp.className = 'disp encargo'; disp.innerHTML = 'Este perfume ya no está en el catálogo. <a href="../">Ver los perfumes disponibles</a>'; }
+      return;
+    }
     el.querySelectorAll('.opcion-ficha[data-caja]').forEach((a) => {
       const k = a.dataset.caja, hay = L.hay(p, k);
       a.classList.toggle('hay', hay);

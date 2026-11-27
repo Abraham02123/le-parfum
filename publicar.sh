@@ -31,6 +31,16 @@ if git remote get-url origin >/dev/null 2>&1; then
   git pull -q --rebase --autostash origin "$(git branch --show-current)"
 fi
 
+# Rearmar el catálogo con lo que diga precios.csv (27-nov): los perfumes que el dueño agregó desde el celular salen
+# con su foto (se baja sola), notas, descripción y página; los que quitó desaparecen. Sin cambios no cambia nada.
+# Hace falta un Python con Pillow (convierte las fotos a .webp); no todos los de esta máquina lo tienen.
+PY=""
+for c in python py /d/trading-ai-system/venv/Scripts/python.exe; do
+  if command -v "$c" >/dev/null 2>&1 && "$c" -I -c "import PIL" 2>/dev/null; then PY="$c"; break; fi
+done
+[ -n "$PY" ] || { echo "🔴 No hay un Python con Pillow para armar el catálogo (pip install pillow)"; exit 1; }
+"$PY" -I datos/armar_catalogo.py >/dev/null
+
 # Una página fija por perfume y por marca (para que Google las encuentre y la vista previa al compartir lleve su foto).
 node generar_paginas.js "$URL"
 node pruebas.js            # si una comprobación falla, no se publica nada

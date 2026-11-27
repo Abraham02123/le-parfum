@@ -38,12 +38,22 @@
     .epocas { display: flex; gap: 6px; flex-wrap: wrap; }
     .epocas button { border: 1px solid var(--linea); background: var(--papel); border-radius: 999px; padding: 8px 12px; font-size: 14px; }
     .epocas button[aria-pressed=true] { background: var(--oud); border-color: var(--oud); color: #fff; }
-    .visible { font-size: 14px; display: flex; gap: 8px; align-items: center; margin-top: 10px; }
     .mas { margin: 8px auto 0; display: flex; }
     .barra { position: fixed; left: 0; right: 0; bottom: 0; background: var(--papel); border-top: 1px solid var(--linea);
       padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); display: flex; gap: 10px; align-items: center; justify-content: center; z-index: 5; }
     .barra .btn { flex: 1 1 auto; max-width: 420px; }
     .barra .btn[disabled] { opacity: .45; cursor: default; }
+    .pestanas { display: flex; gap: 6px; margin: 0 0 14px; border-bottom: 1px solid var(--linea); overflow-x: auto; }
+    .pestanas button { border: 0; background: none; padding: 10px 12px; font-size: 15px; color: var(--suave); border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; }
+    .pestanas button[aria-selected=true] { color: var(--tinta); border-bottom-color: var(--oud); font-weight: 500; }
+    .acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .acciones .btn { padding: 9px 14px; font-size: 14px; }
+    .btn.peligro { color: var(--error); border-color: var(--error); }
+    .item.quitado { opacity: .7; } .item.quitado h2 { text-decoration: line-through; }
+    .nota-item { font-size: 13px; color: var(--suave); margin: -4px 0 10px; }
+    .item.resultado .btn { padding: 9px 16px; font-size: 14px; }
+    .ya { font-size: 14px; color: var(--salvia); }
+    .vacio { color: var(--suave); padding: 18px 4px; }
     .mensaje { max-width: 760px; margin: 0 auto 12px; padding: 12px 14px; border-radius: var(--r); font-size: 15px; }
     .mensaje.ok { background: #E8F1EA; color: #234A31; } .mensaje.mal { background: #FBEDEB; color: #7A2419; } .mensaje.info { background: #F6EBD9; color: #6A4A14; }
   </style>
@@ -51,8 +61,8 @@
 <body>
   <main class="ed">
     <p><a href="./">← Volver a la tienda</a></p>
-    <h1>Precios y existencias</h1>
-    <p class="sub">Cambia precios, si está disponible, las épocas del año o si se ve en la tienda. Al guardar, la tienda se actualiza sola en 1 o 2 minutos.</p>
+    <h1>Perfumes y precios</h1>
+    <p class="sub">Cambia precios, existencias y épocas del año; agrega perfumes nuevos, archiva los que no quieras mostrar por un tiempo o quítalos. Al guardar, la tienda se actualiza sola.</p>
 
     <details class="clave" id="caja-clave">
       <summary id="titulo-clave">Clave para guardar</summary>
@@ -67,13 +77,29 @@
 
     <div class="mensaje" id="mensaje" role="status" hidden></div>
 
-    <div class="buscar">
-      <input type="search" id="buscar" placeholder="Buscar por marca o nombre" aria-label="Buscar por marca o nombre">
-      <label><input type="checkbox" id="solo-cambios"> Solo los que cambié</label>
+    <div class="pestanas" role="tablist" aria-label="Qué perfumes ver">
+      <button type="button" role="tab" data-p="tienda" id="tab-tienda" aria-selected="true">En la tienda</button>
+      <button type="button" role="tab" data-p="archivo" id="tab-archivo" aria-selected="false">Archivados</button>
+      <button type="button" role="tab" data-p="agregar" id="tab-agregar" aria-selected="false">+ Agregar</button>
     </div>
-    <p class="cuenta" id="cuenta">Cargando…</p>
-    <div id="lista"></div>
-    <button class="btn btn-borde mas" id="ver-mas" type="button" hidden>Ver más</button>
+
+    <section id="vista-lista">
+      <div class="buscar">
+        <input type="search" id="buscar" placeholder="Buscar por marca o nombre" aria-label="Buscar por marca o nombre">
+        <label><input type="checkbox" id="solo-cambios"> Solo los que cambié</label>
+      </div>
+      <p class="cuenta" id="cuenta">Cargando…</p>
+      <div id="lista"></div>
+      <button class="btn btn-borde mas" id="ver-mas" type="button" hidden>Ver más</button>
+    </section>
+
+    <section id="vista-agregar" hidden>
+      <div class="buscar">
+        <input type="search" id="buscar-nuevo" placeholder="Marca o nombre del perfume a agregar" aria-label="Marca o nombre del perfume a agregar">
+      </div>
+      <p class="cuenta" id="cuenta-agregar"></p>
+      <div id="resultados"></div>
+    </section>
   </main>
   <div class="barra"><button class="btn btn-tinta" id="guardar" type="button" disabled>No hay cambios</button></div>
 

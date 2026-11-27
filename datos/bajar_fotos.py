@@ -9,23 +9,37 @@ AQUI = pathlib.Path(__file__).parent
 DESTINO = AQUI.parent / 'img'
 DESTINO.mkdir(exist_ok=True)
 URL = 'https://fimgs.net/mdimg/perfume/375x500.{}.jpg'
-fallan = []
-for x in json.loads((AQUI / 'seleccion.json').read_text(encoding='utf-8')):
-    final = DESTINO / f"{x['fid']}.webp"
+
+
+def bajar_una(fid):
+    """Baja la foto de un perfume a img/<fid>.webp. Devuelve None si quedó (o ya estaba) y el motivo si falló.
+    La usa también armar_catalogo.py para los perfumes que el dueño agrega desde precios.html (27-nov)."""
+    final = DESTINO / f"{fid}.webp"
     if final.exists() and final.stat().st_size > 2000:
-        continue
+        return None
+    err = None
     for intento in range(3):
         try:
-            pet = urllib.request.Request(URL.format(x['fid']), headers={'User-Agent': 'Mozilla/5.0 (catalogo-tienda)'})
+            pet = urllib.request.Request(URL.format(fid), headers={'User-Agent': 'Mozilla/5.0 (catalogo-tienda)'})
             datos = urllib.request.urlopen(pet, timeout=40).read()
             im = Image.open(io.BytesIO(datos)).convert('RGB')
             im.save(final, 'WEBP', quality=82, method=6)
-            break
+            return None
         except Exception as e:
             err = e
             time.sleep(3 * (intento + 1))
-    else:
-        fallan.append((x['fid'], str(err)[:60]))
-    time.sleep(0.6)
-total = len(list(DESTINO.glob('*.webp')))
-print('fotos en img/:', total, '· fallaron:', len(fallan), fallan[:20])
+    return str(err)[:60]
+
+
+if __name__ == '__main__':
+    fallan = []
+    for x in json.loads((AQUI / 'seleccion.json').read_text(encoding='utf-8')):
+        final = DESTINO / f"{x['fid']}.webp"
+        if final.exists() and final.stat().st_size > 2000:
+            continue
+        motivo = bajar_una(x['fid'])
+        if motivo:
+            fallan.append((x['fid'], motivo))
+        time.sleep(0.6)
+    total = len(list(DESTINO.glob('*.webp')))
+    print('fotos en img/:', total, '· fallaron:', len(fallan), fallan[:20])

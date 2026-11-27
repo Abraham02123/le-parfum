@@ -179,12 +179,16 @@
   }
   // Aplica la hoja sobre el catálogo, perfume por perfume (por su número «id»). Lo que la hoja no trae o trae mal
   // (precio vacío o absurdo) se queda como estaba: una celda mal escrita no rompe la tienda.
-  function aplicarHoja(lista, texto) {
+  // Con { soloHoja: true } (27-nov, el dueño agrega y QUITA perfumes en precios.html): un perfume que ya no está en la
+  // hoja se esconde (visible = false) en vez de quedarse como estaba; así lo quitado desaparece de la tienda en cuanto se
+  // guarda, sin esperar a que se reconstruya el catálogo. Quien llama comprueba antes que la hoja es de verdad la lista
+  // (que trae al menos la mitad de los perfumes): una hoja vacía o rota no puede esconder la tienda entera.
+  function aplicarHoja(lista, texto, opciones = {}) {
     const porId = new Map(leerCsv(texto).map((r) => [String(r.id || '').trim(), r]));
     let coinciden = 0, cambiados = 0;
     const nueva = lista.map((p0) => {
       const p = normalizar({ ...p0 }), r = porId.get(String(p.id));
-      if (!r) return p;
+      if (!r) { if (opciones.soloHoja && p.visible !== false) { p.visible = false; cambiados++; } return p; }
       coinciden++;
       const antes = JSON.stringify([p.precio_sin_caja, p.precio_con_caja, p.disponible, p.visible, p.temporadas]);
       const sin = pesos(r.sin_caja ?? r.precio_sin_caja), con = pesos(r.con_caja ?? r.precio_con_caja);

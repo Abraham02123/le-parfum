@@ -1,2 +1,5 @@
 datos/fuente/
 datos/*.log
+__pycache__/
+reconstruir.lock/
+reconstruir.pendiente

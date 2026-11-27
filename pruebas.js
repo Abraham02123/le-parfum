@@ -77,8 +77,9 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   ctx.TIENDA_CONFIG = Object.assign({}, globalThis.TIENDA_CONFIG, { whatsapp: '57 300 123 4567' });
   vm.runInContext(fs.readFileSync(__dirname + '/datos.js', 'utf8'), ctx, { filename: 'datos.js' });
   const C5 = ctx.CATALOGO;
-  ok(C5.length === 500, 'catálogo de 500');
-  ok(new Set(C5.map((p) => p.id)).size === 500, 'ids únicos');
+  // Desde el 27-nov el dueño agrega y quita perfumes (precios.html): el total ya no es fijo en 500.
+  ok(C5.length > 100, `catálogo con perfumes (${C5.length})`);
+  ok(new Set(C5.map((p) => p.id)).size === C5.length, 'ids únicos');
   const sinFoto = C5.filter((p) => !p.imagen_url || !fs.existsSync(__dirname + '/' + p.imagen_url));
   ok(!sinFoto.length, `fotos que faltan: ${sinFoto.slice(0, 5).map((p) => p.imagen_url)}`);
   ok(C5.every((p) => p.precio > 0 && p.nombre && p.marca), 'precio, nombre y marca en todos');
@@ -86,7 +87,7 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   ok(C5.every((p) => FAM.includes(p.familia)), 'familias válidas');
   ok(C5.every((p) => ['hombre', 'mujer', 'unisex'].includes(p.genero) && ['disenador', 'nicho', 'arabe'].includes(p.tipo)), 'género y tipo válidos');
   const W = ctx.Datos; ok(W.modo === 'whatsapp', 'con número de WhatsApp entra en modo whatsapp');
-  ok((await W.perfumes()).length === 500, 'modo whatsapp muestra los 500');
+  ok((await W.perfumes()).length === C5.filter((p) => p.visible !== false).length, 'modo whatsapp muestra todos los visibles');
   const pw = await W.crearPedido({ nombre: 'Ana', telefono: '300', direccion: 'Calle 1', metodo_pago: 'transferencia', items: [{ perfume_id: C5[0].id, cantidad: 2 }] });
   ok(pw.total === C5[0].precio * 2, 'modo whatsapp calcula el total');
   // ── 27-nov: con caja / sin caja ──
@@ -110,6 +111,14 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   ok(a0.precio_sin_caja === 800 && a0.precio_con_caja === 2100 && a0.disponible === 'ambas' && a0.precio === 800, 'la hoja cambia precios y disponibilidad');
   ok(a1.precio_sin_caja === C5[1].precio_sin_caja && a1.precio_con_caja === C5[1].precio_con_caja && a1.visible === false, 'una celda mal escrita deja el precio como estaba');
   ok(h.coinciden === 2 && C5[0].precio_sin_caja !== 800, 'la hoja no modifica el catálogo original');
+  // Quitar desde precios.html (27-nov): con soloHoja, lo que no está en la hoja se esconde; sin la opción, se queda.
+  const hq = L.aplicarHoja(C5, `id,visible
+${p0.id},si
+`, { soloHoja: true });
+  ok(hq.lista.find((p) => p.id === p0.id).visible === true && hq.lista.filter((p) => p.visible !== false).length === 1, 'soloHoja esconde lo que se quitó de la hoja');
+  ok(L.aplicarHoja(C5, `id,visible
+${p0.id},si
+`).lista.every((p) => p.visible !== false), 'sin soloHoja lo que falta se queda como estaba');
   ok(L.urlHoja('https://docs.google.com/spreadsheets/d/ABC_123/edit?usp=sharing') === 'https://docs.google.com/spreadsheets/d/ABC_123/gviz/tq?tqx=out:csv&headers=1', 'enlace de la hoja → CSV');
   // Épocas del año (27-nov): se escriben a mano en precios.csv, varias a la vez, con o sin acento.
   ok(L.leerTemporadas('primavera / VERANO').join() === 'Primavera,Verano' && L.leerTemporadas('otono, invierno').join() === 'Otoño,Invierno', 'épocas escritas de varias formas');

@@ -34,7 +34,7 @@
       try {
         const r = await fetch(url + (url.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
         if (!r.ok) throw new Error('respondió ' + r.status);
-        const h = L.aplicarHoja(lista, await r.text());
+        const h = L.aplicarHoja(lista, await r.text(), { soloHoja: true });
         if (h.coinciden < lista.length / 2) throw new Error(`solo trae ${h.coinciden} de ${lista.length} perfumes`);
         Datos.fuente = 'hoja'; return h.lista;
       } catch (e) {

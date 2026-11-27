@@ -1,20 +1,35 @@
 # Arma el catálogo de la tienda (../catalogo.js) y la carga para la base de datos (../supabase/semilla.sql)
-# a partir de: seleccion.json (los 500 perfumes), nombres.json (marca y nombre bien escritos),
-# notas_es.json (cada nota y acorde en español) y las fotos ya bajadas en ../img/.
+# a partir de: QUÉ perfumes van = los de ../precios.csv (el dueño agrega, quita y archiva desde precios.html, 27-nov;
+# si precios.csv no existe, los 500 de seleccion.json), y de cada uno: todos.json.gz (los 24.063 perfumes de la
+# fuente: notas, acordes, año, género), nombres.json (marca y nombre bien escritos de los 500 originales; los demás se
+# escriben con traducir.py), notas_es.json + notas_es_extra.json (cada nota en español) y la foto en ../img/ (si falta,
+# se baja sola). También escribe ../buscador_perfumes.json: la lista de los 24.063 para buscar y agregar en precios.html.
 #
 # Los PRECIOS son de referencia por marca (ver PRECIO_MARCA): sirven para que el catálogo se vea completo y los
 # filtros de precio funcionen. Hay que cambiarlos por los reales (panel → Exportar lista → editar → Importar).
 # Las existencias empiezan en 0: todo sale «Por encargo» hasta que se carguen las reales.
 # Los votos de Fragrantica se usan solo para ORDENAR por popularidad; no se muestran (son de una copia vieja).
 #
-# Uso: python -I armar_catalogo.py      (se puede correr cuantas veces haga falta; no toca precios ya editados
-#                                         en la base, solo reescribe catalogo.js y semilla.sql)
-import csv, json, pathlib, re, datetime
+# Uso: python -I armar_catalogo.py      (se puede correr cuantas veces haga falta; nunca escribe en precios.csv si ya
+#                                         existe: solo reescribe catalogo.js, semilla.sql y buscador_perfumes.json)
+import csv, json, pathlib, re, datetime, gzip, hashlib, sys
 
 AQUI = pathlib.Path(__file__).parent
 RAIZ = AQUI.parent
+sys.path.insert(0, str(AQUI))
+from traducir import MARCAS, nombre_desde_slug
+from bajar_fotos import bajar_una
 leer = lambda n: json.loads((AQUI / n).read_text(encoding='utf-8'))
 sel, nombres, es = leer('seleccion.json'), leer('nombres.json'), leer('notas_es.json')
+# Notas de los perfumes fuera de los 500 originales (27-nov, traducidas para poder agregar cualquiera): solo rellenan
+# lo que notas_es.json no tiene; lo ya revisado de notas_es.json manda.
+if (AQUI / 'notas_es_extra.json').exists():
+    es = {**leer('notas_es_extra.json'), **es}
+todos = {}
+if (AQUI / 'todos.json.gz').exists():
+    with gzip.open(AQUI / 'todos.json.gz', 'rt', encoding='utf-8') as fh:
+        todos = {x['fid']: x for x in json.load(fh)}
+todos.update({x['fid']: x for x in sel})
 
 # Correcciones del revisor (26-nov): términos de Latinoamérica y nombres de ingrediente sin traducir.
 es.update({'grapefruit': 'toronja', 'blood grapefruit': 'toronja sanguina', 'pink grapefruit': 'toronja rosa',
@@ -159,14 +174,52 @@ def temporadas(acordes):
     t = {'Primavera', 'Verano'} if sc >= 0.35 else {'Otoño', 'Invierno'} if sc <= -0.35 else {'Primavera', 'Otoño'}
     if set(acordes[:3]) & FLORAL and sc > -1.1: t.add('Primavera')
     return [e for e in EPOCAS if e in t]
-salida, sin_foto, sin_familia = [], [], []
+def nombre_de(x):
+    nm = nombres.get(str(x['fid']))
+    return nm or {'marca': MARCAS.get(x['marca_slug']) or nombre_desde_slug(x['marca_slug']),
+                  'nombre': nombre_desde_slug(x['nombre_slug'])}
+
+
+# ── Qué perfumes van (27-nov): los de precios.csv, en el orden de seleccion.json (los más votados primero) y los que el
+# dueño agregó después, al final en el orden en que los agregó. Lo que quitó de precios.csv deja de estar aquí; lo que
+# archivó sigue (con «visible» = no) para poder restaurarlo con sus precios.
+ruta_csv = RAIZ / 'precios.csv'
+pos_sel = {x['fid']: i for i, x in enumerate(sel)}
+if ruta_csv.exists():
+    ids_csv = []
+    for r in csv.DictReader(ruta_csv.read_text(encoding='utf-8-sig').splitlines()):
+        try:
+            i = int(str(r.get('id', '')).strip())
+        except ValueError:
+            continue
+        if i not in ids_csv: ids_csv.append(i)
+    desconocidos = [i for i in ids_csv if i not in todos]
+    if desconocidos: print('⚠ precios.csv trae ids que no existen en la fuente (se ignoran):', desconocidos[:20])
+    pos_csv = {i: k for k, i in enumerate(ids_csv)}
+    miembros = sorted((i for i in ids_csv if i in todos), key=lambda i: (pos_sel.get(i, 10**7), pos_csv[i]))
+else:
+    miembros = [x['fid'] for x in sel]
+
+# Fecha de alta de cada perfume: se conserva la del catálogo anterior (la tienda ordena «lo más nuevo» por ella);
+# solo los recién agregados llevan la de hoy.
+creado_antes = {}
+if (RAIZ / 'catalogo.js').exists():
+    for m in re.finditer(r'"id":(\d+),.*?"creado":"([^"]+)"', (RAIZ / 'catalogo.js').read_text(encoding='utf-8')):
+        creado_antes[int(m.group(1))] = m.group(2)
+
+salida, sin_foto, sin_familia, fotos_nuevas = [], [], [], []
 hoy = datetime.date.today().isoformat()
-for orden, x in enumerate(sel):
-    nm = nombres[str(x['fid'])]
+for orden, fid in enumerate(miembros):
+    x = todos[fid]
+    nm = nombre_de(x)
     t = tipo_de(x)
     fam = next((FAMILIA[a] for a in x['acordes'] if a in FAMILIA), None)
     if not fam: sin_familia.append(x['fid'])
     foto = RAIZ / 'img' / f"{x['fid']}.webp"
+    if not foto.exists():
+        motivo = bajar_una(x['fid'])   # perfume recién agregado: su foto se baja sola
+        if motivo: print('⚠ sin foto', x['fid'], motivo)
+        else: fotos_nuevas.append(x['fid'])
     if not foto.exists(): sin_foto.append(x['fid'])
     p = {'id': x['fid'], 'nombre': nm['nombre'], 'marca': nm['marca'], 'genero': x['genero'], 'tipo': t, 'familia': fam,
          'concentracion': concentracion_de(nm['nombre']), 'ml': None, 'precio': None, 'precio_antes': None, 'stock': 0,
@@ -174,7 +227,7 @@ for orden, x in enumerate(sel):
          'notas_fondo': ', '.join(lista_es(x['fondo'])) or None,
          'acordes': [cap(tr(a)) for a in x['acordes']], 'votos': x['votos'], 'anio': x['anio'],
          'imagen_url': f"img/{x['fid']}.webp" if foto.exists() else None,
-         'destacado': orden < 12, 'visible': True, 'creado': hoy}
+         'destacado': orden < 12, 'visible': True, 'creado': creado_antes.get(x['fid'], hoy)}
     p['descripcion'] = descripcion(p, x)
     ref = int(a_pesos(precio_de(x, t)))
     p['precio_sin_caja'], p['precio_con_caja'] = escalon(ref)
@@ -184,11 +237,14 @@ for orden, x in enumerate(sel):
     p['_ref'] = ref
     salida.append(p)
 
-ver = datetime.datetime.now().strftime('%Y%m%d%H%M')
+# La versión es una marca del CONTENIDO (27-nov), no la hora: si nada cambió, catalogo.js sale idéntico y la
+# reconstrucción automática (reconstruir.sh) no publica nada.
+cuerpo = ',\n'.join(json.dumps({k: v for k, v in p.items() if not k.startswith('_')}, ensure_ascii=False, separators=(',', ':')) for p in salida)
+ver = hashlib.sha1(cuerpo.encode('utf-8')).hexdigest()[:10]
 js = ('// Catálogo de la tienda: lo genera datos/armar_catalogo.py (no editar a mano; para cambiar precios, disponibilidad y\n'
       '// épocas del año: precios.html → precios.csv, que manda sobre esto). Precio sin caja / con caja por escalones (27-nov).\n'
       f"window.CATALOGO_VERSION = '{ver}';\nwindow.CATALOGO = [\n"
-      + ',\n'.join(json.dumps({k: v for k, v in p.items() if not k.startswith('_')}, ensure_ascii=False, separators=(',', ':')) for p in salida) + '\n];\n')
+      + cuerpo + '\n];\n')
 (RAIZ / 'catalogo.js').write_text(js, encoding='utf-8')
 
 def q(v):
@@ -199,7 +255,7 @@ def q(v):
     return "'" + str(v).replace("'", "''") + "'"
 cols = ['id', 'nombre', 'marca', 'genero', 'tipo', 'familia', 'concentracion', 'ml', 'precio', 'precio_antes', 'stock', 'descripcion',
         'notas_salida', 'notas_corazon', 'notas_fondo', 'acordes', 'votos', 'anio', 'imagen_url', 'destacado', 'visible', 'temporadas']
-sql = ['-- Carga los 500 perfumes del catálogo. Correr UNA vez, DESPUÉS de esquema.sql (SQL Editor de Supabase → Run).',
+sql = [f'-- Carga los {len(salida)} perfumes del catálogo. Correr UNA vez, DESPUÉS de esquema.sql (SQL Editor de Supabase → Run).',
        '-- Si un perfume ya existe (mismo id) no se toca: así no se pisan precios o existencias ya editados.',
        'begin;',
        f"insert into perfumes ({', '.join(cols)}) overriding system value values"]
@@ -209,26 +265,32 @@ sql += ["select setval(pg_get_serial_sequence('perfumes','id'), greatest(1000000
 (RAIZ / 'supabase' / 'semilla.sql').write_text('\n'.join(sql) + '\n', encoding='utf-8')
 
 # ── precios.csv: lo que el dueño cambia desde el celular (precios.html) y la tienda lee al abrirse (27-nov) ──────
-# Se CREA si no existe. Si ya existe NO se toca lo escrito: solo se añaden al final los perfumes nuevos, para no
-# pisar precios, disponibilidad o épocas que el dueño ya cambió.
+# Se CREA si no existe. Si ya existe NO se toca: desde el 27-nov es el dueño quien dice qué perfumes van (agregar,
+# quitar y archivar en precios.html); antes este paso añadía al final los que faltaban, y eso deshacía cada «quitar».
 DISP_TEXTO = {'con_caja': 'con caja', 'sin_caja': 'sin caja', 'ambas': 'con y sin caja', 'no': 'no disponible'}
 CAB = ['id', 'marca', 'nombre', 'sin caja', 'con caja', 'disponible', 'temporadas', 'visible']
 fila_csv = lambda p: [p['id'], p['marca'], p['nombre'], p['precio_sin_caja'], p['precio_con_caja'], DISP_TEXTO[p['disponible']],
                       ' / '.join(p['temporadas']), 'si' if p['visible'] else 'no']
-ruta_csv = RAIZ / 'precios.csv'
 if ruta_csv.exists():
-    ya = {str(r['id']).strip() for r in csv.DictReader(ruta_csv.read_text(encoding='utf-8-sig').splitlines())}
-    nuevos = [p for p in salida if str(p['id']) not in ya]
-    if nuevos:
-        texto = ruta_csv.read_text(encoding='utf-8')
-        with ruta_csv.open('a', encoding='utf-8', newline='') as fh:
-            if texto and not texto.endswith('\n'): fh.write('\n')
-            csv.writer(fh, lineterminator='\n').writerows(fila_csv(p) for p in nuevos)
-    print(f'precios.csv: ya existía; {len(nuevos)} perfumes nuevos añadidos al final, lo demás intacto')
+    print('precios.csv: ya existía, no se toca (manda el dueño)')
 else:
     with ruta_csv.open('w', encoding='utf-8', newline='') as fh:
         w = csv.writer(fh, lineterminator='\n'); w.writerow(CAB); w.writerows(fila_csv(p) for p in salida)
     print('precios.csv: creado con', len(salida), 'perfumes')
+
+# ── buscador_perfumes.json: los 24.063 perfumes de la fuente, para buscar y agregar en precios.html (27-nov) ─────
+# Una fila por perfume, de los más votados a los menos: [id, marca, nombre, género (m/h/u), año, sin caja, con caja,
+# épocas (iniciales P V O I)]. Precio y épocas salen de las mismas reglas de arriba: el perfume entra completo.
+G = {'mujer': 'm', 'hombre': 'h', 'unisex': 'u'}
+filas_b = []
+for x in sorted(todos.values(), key=lambda x: (-x['votos'], x['fid'])):
+    nm = nombre_de(x)
+    sin, con = escalon(int(a_pesos(precio_de(x, tipo_de(x)))))
+    ep = ''.join(e[0] for e in temporadas(x['acordes']))
+    filas_b.append([x['fid'], nm['marca'], nm['nombre'], G.get(x['genero'], 'u'), x['anio'] or 0, sin, con, ep])
+(RAIZ / 'buscador_perfumes.json').write_text(json.dumps(filas_b, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+print('buscador_perfumes.json:', len(filas_b), 'perfumes ·', round((RAIZ / 'buscador_perfumes.json').stat().st_size / 1e6, 2), 'MB')
+if fotos_nuevas: print('fotos bajadas ahora:', fotos_nuevas)
 
 from collections import Counter
 print('perfumes:', len(salida), '· con foto:', len(salida) - len(sin_foto), '· sin foto:', len(sin_foto), '· sin familia:', sin_familia)
@@ -236,7 +298,7 @@ print('familias:', dict(Counter(p['familia'] for p in salida)))
 print('tipos:', dict(Counter(p['tipo'] for p in salida)), '· géneros:', dict(Counter(p['genero'] for p in salida)))
 print('precios (sin caja, con caja):', dict(sorted(Counter((p['precio_sin_caja'], p['precio_con_caja']) for p in salida).items())))
 print('concentración:', dict(Counter(p['concentracion'] for p in salida)))
-print('marcas a 95 por defecto:', sorted({x['marca_slug'] for x, p in zip(sel, salida) if p['_ref'] == a_pesos(95)}))
+print('marcas a 95 por defecto:', sorted({todos[p['id']]['marca_slug'] for p in salida if p['_ref'] == a_pesos(95)}))
 print('épocas por perfume:', dict(Counter(len(p['temporadas']) for p in salida)), '·',
       dict(Counter(e for p in salida for e in p['temporadas'])), '· acordes sin temperatura:', sorted(sin_temperatura) or 0)
 print('versión:', ver)
