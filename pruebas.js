@@ -101,8 +101,6 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   const t = fs.readFileSync(__dirname + '/tienda.js', 'utf8');
   ok(!/este pedido \(\$\{r\.id\}\)/.test(t) && t.includes("'Hola, quiero hacer este pedido:'"), 'el mensaje de WhatsApp ya no lleva el código del pedido');
   ok(!/whatsapp-listo'\)\.addEventListener\('click'[^\n]*carrito = \[\]/.test(t), 'enviar por WhatsApp no vacía el carrito');
-  ok(t.includes('Foto: ${urlFicha(l.perfume_id)}') && t.includes('p/${id}.html'), 'cada perfume del mensaje lleva el enlace a su foto (27-nov)');
-  ok(t.includes('async function imagenPedido') && t.includes("$('#fotos-listo').addEventListener('click', enviarFotos)") && !t.includes("setTimeout(() => cerrar('#capa-listo')"), 'botón de las fotos del pedido, y la ventana no se cierra sola al ir a WhatsApp');
   ok(!t.includes('e.target.reset()'), 'el formulario conserva lo escrito');
   // hoja de Google: precios con formatos de México y de Excel en español, disponibilidad con palabras, filas mal escritas ignoradas
   ok(L.pesos('$1,950.00') === 1950 && L.pesos('1.950,00') === 1950 && L.pesos('950') === 950, 'precios escritos de varias formas');

@@ -192,7 +192,6 @@ h1, h2, h3, h4 { margin: 0; font-weight: 400; }
   display: grid; place-items: center; box-shadow: 0 8px 22px -8px rgba(0,0,0,.45); }
 .wa-flotante svg { width: 30px; fill: #fff; }
 .wa-flotante:hover { background: #17603C; }
-.sin-scroll .wa-flotante { display: none; }   /* con una ventana abierta no tapa sus botones (27-nov) */
 
 /* Ventanas */
 .capa { position: fixed; inset: 0; z-index: 50; background: rgba(30,26,29,.42); display: grid; place-items: center; padding: 20px;
@@ -282,7 +281,6 @@ h1, h2, h3, h4 { margin: 0; font-weight: 400; }
 .pago.deshabilitada { opacity: .5; cursor: not-allowed; }
 .error { color: var(--error); font-size: 14px; margin: 0; }
 .listo p { color: var(--suave); margin: 0 0 22px; }
-.fotos-listo { margin-top: 12px; }
 
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 60; background: var(--tinta); color: #fff;
   padding: 12px 20px; border-radius: 999px; font-size: 15px; box-shadow: 0 10px 28px -10px rgba(0,0,0,.5); animation: aparece .2s ease; }
