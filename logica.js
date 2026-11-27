@@ -47,15 +47,32 @@
     });
   }
 
+  // ── Dos versiones de cada perfume (27-nov): saldo CON caja y saldo SIN caja, cada una con su precio. ──
+  // disponible: 'con_caja' | 'sin_caja' | 'ambas' | 'no'. Lo que no está disponible se consigue en 2 días a 1 semana.
+  const ESTADOS = ['con_caja', 'sin_caja', 'ambas', 'no'];
+  const estado = (p) => (ESTADOS.includes(p.disponible) ? p.disponible : p.stock > 0 ? 'ambas' : 'no');
+  const hayAlgo = (p) => estado(p) !== 'no';
+  // ¿Esa versión se entrega ya? caja = 'con' | 'sin'
+  const hay = (p, caja) => { const e = estado(p); return e === 'ambas' || e === (caja === 'con' ? 'con_caja' : 'sin_caja'); };
+  const precioDe = (p, caja) => +(caja === 'con' ? p.precio_con_caja : p.precio_sin_caja) || +p.precio || 0;
+  // Completa los campos nuevos si faltan (datos viejos o de demostración). «precio» = el más barato de los dos:
+  // es el que usan los filtros y el orden por precio.
+  function normalizar(p) {
+    const sin = +p.precio_sin_caja > 0 ? +p.precio_sin_caja : +p.precio || 0;
+    const con = +p.precio_con_caja > 0 ? +p.precio_con_caja : sin;
+    return Object.assign(p, { precio_sin_caja: sin, precio_con_caja: con, precio: Math.min(sin, con), disponible: estado(p) });
+  }
+  const PLAZO = 'te lo conseguimos en 2 días a 1 semana';
+
   const ORDENES = {
-    // «Destacados»: primero los marcados a mano, después los que tienes en existencias y después los más votados.
-    destacados: (a, b) => (b.destacado - a.destacado) || ((b.stock > 0) - (a.stock > 0)) || ((b.votos || 0) - (a.votos || 0)) || a.nombre.localeCompare(b.nombre),
+    // «Destacados»: primero los marcados a mano, después los disponibles ya y después los más votados.
+    destacados: (a, b) => (b.destacado - a.destacado) || (hayAlgo(b) - hayAlgo(a)) || ((b.votos || 0) - (a.votos || 0)) || a.nombre.localeCompare(b.nombre),
     populares: (a, b) => ((b.votos || 0) - (a.votos || 0)) || a.nombre.localeCompare(b.nombre),
     precio_asc: (a, b) => a.precio - b.precio,
     precio_desc: (a, b) => b.precio - a.precio,
     nombre: (a, b) => a.nombre.localeCompare(b.nombre),
     nuevos: (a, b) => ((b.anio || 0) - (a.anio || 0)) || String(b.creado).localeCompare(String(a.creado)),
-    disponibles: (a, b) => (b.stock - a.stock) || a.nombre.localeCompare(b.nombre),
+    disponibles: (a, b) => (hayAlgo(b) - hayAlgo(a)) || a.nombre.localeCompare(b.nombre),
   };
 
   // f = { q, categoria, marcas:[], familias:[], concentraciones:[], tamanos:[], min, max, soloDisponibles, orden }
@@ -69,14 +86,17 @@
       en(f.tamanos, String(p.ml)) &&
       (f.min == null || f.min === '' || p.precio >= +f.min) &&
       (f.max == null || f.max === '' || p.precio <= +f.max) &&
-      (!f.soloDisponibles || p.stock > 0));
+      (!f.soloDisponibles || hayAlgo(p)));
     return r.sort(ORDENES[f.orden] || ORDENES.destacados);
   }
 
+  // Las tres opciones con las palabras del dueño (27-nov); «ambas» es por si tiene las dos versiones.
   function disponibilidad(p) {
-    if (p.stock > 5) return { texto: 'Disponible', clase: 'ok' };
-    if (p.stock > 0) return { texto: p.stock === 1 ? 'Última unidad' : `Últimas ${p.stock} unidades`, clase: 'pocas' };
-    return { texto: 'Por encargo: lo conseguimos para ti', clase: 'encargo' };
+    const e = estado(p);
+    if (e === 'ambas') return { texto: 'Disponible: saldo con caja y sin caja', clase: 'ok' };
+    if (e === 'con_caja') return { texto: 'Disponible: saldo con caja', clase: 'ok' };
+    if (e === 'sin_caja') return { texto: 'Disponible: saldo sin caja', clase: 'ok' };
+    return { texto: 'No disponible: ' + PLAZO, clase: 'encargo' };
   }
 
   function dinero(n, cfg) {
@@ -85,8 +105,10 @@
       maximumFractionDigits: sinDec ? 0 : 2, minimumFractionDigits: sinDec ? 0 : 2 }).format(n);
   }
 
-  // Reparte un pedido: lo que hay en stock se descuenta, el resto queda «por encargo».
-  // El precio sale del catálogo, nunca del navegador del cliente. Misma regla que crear_pedido en el esquema SQL.
+  // Arma un pedido: cada línea es un perfume en una versión (con caja o sin caja), con el precio de esa versión.
+  // Si esa versión no está disponible, la línea va «por encargo» (se consigue en 2 días a 1 semana).
+  // El precio sale del catálogo, nunca del navegador del cliente.
+  // (El modo con base de datos, crear_pedido del esquema SQL, todavía no conoce las dos versiones.)
   function repartirPedido(items, perfumes) {
     if (!Array.isArray(items) || !items.length) throw new Error('El pedido está vacío');
     const lineas = []; let total = 0;
@@ -95,13 +117,80 @@
       const cant = Math.floor(+it.cantidad);
       if (!p) throw new Error('Un perfume del carrito ya no existe');
       if (!(cant > 0) || cant > 50) throw new Error('Cantidad no válida');
-      const enStock = Math.min(Math.max(p.stock, 0), cant);
-      lineas.push({ perfume_id: p.id, nombre: `${p.marca} · ${p.nombre}`, precio: +p.precio, cantidad: cant,
+      const caja = it.caja === 'con' ? 'con' : 'sin', precio = precioDe(p, caja);
+      const enStock = hay(p, caja) ? cant : 0;
+      lineas.push({ perfume_id: p.id, caja, nombre: `${p.marca} · ${p.nombre}, ${caja} caja`, precio, cantidad: cant,
         en_stock: enStock, por_encargo: cant - enStock });
-      total += +p.precio * cant;
+      total += precio * cant;
     }
     return { lineas, total: Math.round(total * 100) / 100 };
   }
 
-  g.Logica = { norm, distancia, coincide, filtrar, disponibilidad, dinero, repartirPedido, ORDENES };
+  // ── Hoja de cálculo (Google Sheets) para cambiar precios y disponibilidad desde el celular (27-nov) ──────
+  // Lee un CSV (coma o punto y coma, con comillas) → filas con las cabeceras sin acentos: «Sin caja» → sin_caja.
+  function leerCsv(t) {
+    t = String(t || '').replace(/^\uFEFF/, '');
+    const cab0 = t.split(/\r?\n/, 1)[0] || '';
+    const sep = (cab0.match(/;/g) || []).length > (cab0.match(/,/g) || []).length ? ';' : ',';
+    const filas = []; let fila = [], campo = '', dentro = false;
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (dentro) { if (c !== '"') campo += c; else if (t[i + 1] === '"') { campo += '"'; i++; } else dentro = false; }
+      else if (c === '"') dentro = true;
+      else if (c === sep) { fila.push(campo); campo = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; fila.push(campo); filas.push(fila); fila = []; campo = ''; }
+      else campo += c;
+    }
+    if (campo !== '' || fila.length) { fila.push(campo); filas.push(fila); }
+    const cab = (filas.shift() || []).map((h) => norm(h).trim().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, ''));
+    return filas.filter((f) => f.some((x) => String(x).trim()))
+      .map((f) => Object.fromEntries(cab.map((h, i) => [h, String(f[i] ?? '').trim()])));
+  }
+  // «$1,950.00», «1.950,00», «1950» → 1950. Los centavos se ignoran (precios en pesos enteros).
+  const pesos = (v) => { const d = String(v ?? '').replace(/[.,]\d{1,2}\s*$/, '').replace(/\D/g, ''); return d ? +d : NaN; };
+  function leerDisponible(v) {
+    const t = norm(v).trim();
+    if (!t) return null;
+    if (/^no\b/.test(t) || t.includes('agotad') || t.includes('encargo')) return 'no';
+    if (t.includes('ambas') || t.includes('las dos') || (t.includes('con') && t.includes('sin'))) return 'ambas';
+    if (t.includes('sin')) return 'sin_caja';
+    if (t.includes('con')) return 'con_caja';
+    return null;
+  }
+  // Aplica la hoja sobre el catálogo, perfume por perfume (por su número «id»). Lo que la hoja no trae o trae mal
+  // (precio vacío o absurdo) se queda como estaba: una celda mal escrita no rompe la tienda.
+  function aplicarHoja(lista, texto) {
+    const porId = new Map(leerCsv(texto).map((r) => [String(r.id || '').trim(), r]));
+    let coinciden = 0, cambiados = 0;
+    const nueva = lista.map((p0) => {
+      const p = normalizar({ ...p0 }), r = porId.get(String(p.id));
+      if (!r) return p;
+      coinciden++;
+      const antes = JSON.stringify([p.precio_sin_caja, p.precio_con_caja, p.disponible, p.visible]);
+      const sin = pesos(r.sin_caja ?? r.precio_sin_caja), con = pesos(r.con_caja ?? r.precio_con_caja);
+      if (sin >= 50 && sin <= 500000) p.precio_sin_caja = sin;
+      if (con >= 50 && con <= 500000) p.precio_con_caja = con;
+      const d = leerDisponible(r.disponible ?? r.disponibilidad); if (d) p.disponible = d;
+      const vi = norm(r.visible ?? r.mostrar).trim();
+      if (['no', '0', 'false', 'oculto', 'ocultar'].includes(vi)) p.visible = false;
+      else if (['si', '1', 'true', 'x', 'mostrar'].includes(vi)) p.visible = true;
+      normalizar(p);
+      if (JSON.stringify([p.precio_sin_caja, p.precio_con_caja, p.disponible, p.visible]) !== antes) cambiados++;
+      return p;
+    });
+    return { lista: nueva, coinciden, cambiados, filas: porId.size };
+  }
+  // El enlace que da Google al compartir la hoja → la dirección que devuelve sus datos como CSV.
+  function urlHoja(s) {
+    s = String(s || '').trim();
+    if (!s) return '';
+    if (/output=csv|tqx=out:csv/.test(s)) return s;
+    const pub = s.match(/\/spreadsheets\/d\/e\/([\w-]+)/);
+    if (pub) return `https://docs.google.com/spreadsheets/d/e/${pub[1]}/pub?output=csv`;
+    const id = s.match(/\/spreadsheets\/d\/([\w-]+)/);
+    return id ? `https://docs.google.com/spreadsheets/d/${id[1]}/gviz/tq?tqx=out:csv&headers=1` : '';
+  }
+
+  g.Logica = { norm, distancia, coincide, filtrar, disponibilidad, dinero, repartirPedido, ORDENES,
+    normalizar, hay, hayAlgo, precioDe, PLAZO, leerCsv, aplicarHoja, urlHoja, pesos, leerDisponible };
 })(typeof window !== 'undefined' ? window : globalThis);

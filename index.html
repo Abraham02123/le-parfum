@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="estilos.css?v=45aa4481">
+  <link rel="stylesheet" href="estilos.css?v=a8859f7d">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"Store","name":"Le Parfum","description":"Perfumes originales árabes, de diseñador y de nicho. Pedidos por WhatsApp y pago contra entrega.","areaServed":"MX","currenciesAccepted":"MXN","paymentAccepted":"Efectivo, transferencia"}</script>
 </head>
 <body class="tienda">
@@ -51,7 +51,7 @@
     <ul class="promesas" aria-label="Lo que te prometemos">
       <li><b>Originales</b><span>Perfumes de la marca, nunca imitaciones</span></li>
       <li><b>Pagas al recibir</b><span>En efectivo o por transferencia, cuando lo tienes en la mano</span></li>
-      <li><b>¿No está? Lo conseguimos</b><span>Pídelo aunque diga «por encargo» y te decimos el plazo</span></li>
+      <li><b>¿No está? Lo conseguimos</b><span>Pídelo aunque diga «no disponible»: te lo conseguimos en 2 días a 1 semana</span></li>
     </ul>
 
     <section id="vistos" class="vistos" aria-labelledby="titulo-vistos" hidden>
@@ -69,7 +69,7 @@
             <button id="cerrar-filtros" class="cerrar solo-movil" aria-label="Cerrar filtros">×</button>
           </div>
           <div class="filtros-cuerpo">
-            <label class="interruptor"><input type="checkbox" id="solo-disponibles"><span>Solo con existencias</span></label>
+            <label class="interruptor"><input type="checkbox" id="solo-disponibles"><span>Solo disponibles ahora</span></label>
             <div class="grupo"><h3>Familia de aroma</h3><div id="f-familias" class="opciones"></div></div>
             <div class="grupo"><h3>Marca</h3>
               <input id="buscar-marca" class="buscar-marca" type="search" placeholder="Buscar marca" aria-label="Buscar marca">
@@ -116,7 +116,7 @@
     <section class="como" aria-labelledby="titulo-como">
       <h2 id="titulo-como">Cómo comprar</h2>
       <ol>
-        <li><b>Elige</b><span>Agrega al carrito los perfumes que quieras. Los que no tenemos en existencias también: los conseguimos.</span></li>
+        <li><b>Elige</b><span>Toca «Con caja» o «Sin caja» en el perfume que quieras. Los no disponibles también: te los conseguimos en 2 días a 1 semana.</span></li>
         <li><b>Envía tu pedido</b><span>Escribe tus datos y se abre WhatsApp con el pedido ya escrito. Solo lo envías.</span></li>
         <li><b>Confirmamos</b><span>Te respondemos con el precio final, la presentación y el día de entrega.</span></li>
         <li><b>Pagas al recibir</b><span>En efectivo o por transferencia, cuando el perfume llega a tus manos.</span></li>
@@ -127,7 +127,8 @@
       <h2 id="titulo-faq">Preguntas frecuentes</h2>
       <details><summary>¿Los perfumes son originales?</summary><p>Sí. Son perfumes de la marca, nunca imitaciones ni «inspirados en».</p></details>
       <details><summary>¿Cuándo y cómo pago?</summary><p>Cuando el perfume llega a tus manos, en efectivo o por transferencia.</p></details>
-      <details><summary>¿Qué quiere decir «por encargo»?</summary><p>Que hoy no lo tenemos, pero lo conseguimos para ti. Al recibir tu pedido te decimos por WhatsApp cuánto tarda en llegar, y tú decides si lo quieres.</p></details>
+      <details><summary>¿Qué diferencia hay entre «con caja» y «sin caja»?</summary><p>Es el mismo perfume original. «Con caja» llega en su caja de la marca; «sin caja» llega solo el frasco, por eso cuesta menos.</p></details>
+      <details><summary>¿Qué quiere decir «no disponible»?</summary><p>Que hoy no lo tenemos, pero te lo conseguimos en un plazo de 2 días a 1 semana, según disponibilidad, al hacer tu pedido por WhatsApp.</p></details>
       <details id="faq-precios"><summary>¿El precio que veo es el final?</summary><p>Es un precio de referencia. Antes de enviar te confirmamos por WhatsApp el precio final y la presentación (cuántos mililitros trae el frasco).</p></details>
       <details><summary>¿Hacen envíos a mi ciudad?</summary><p>Escríbenos por WhatsApp con tu ciudad y te decimos si llegamos, cuánto cuesta el envío y qué día te llega.</p></details>
       <details><summary>No sé cuál elegir, ¿me ayudan?</summary><p>Responde <button class="enlace" data-abrir-quiz>3 preguntas rápidas</button> y te mostramos los que van contigo. También puedes buscar por una nota que te guste: vainilla, rosa, oud…</p></details>
@@ -172,10 +173,11 @@
       <div class="lateral-cabeza"><h2 id="titulo-carrito">Tu carrito</h2><button class="cerrar" data-cerrar aria-label="Cerrar">×</button></div>
       <ul id="lineas-carrito" class="lineas"></ul>
       <div class="lateral-pie">
-        <p id="nota-encargo" class="nota-encargo" hidden>Algunos perfumes van por encargo: te avisamos el plazo al confirmar.</p>
+        <p id="nota-encargo" class="nota-encargo" hidden>Lo que no está disponible ahora te lo conseguimos en 2 días a 1 semana.</p>
         <p id="nota-precios" class="nota-precios" hidden>Precios de referencia: te confirmamos el total antes de enviar.</p>
         <p class="total">Total <b id="total-carrito"></b></p>
         <button id="ir-pagar" class="btn btn-tinta ancho">Hacer el pedido</button>
+        <button id="vaciar-carrito" class="enlace vaciar" hidden>Vaciar carrito</button>
       </div>
     </div>
   </div>
@@ -226,12 +228,12 @@
 
   <div id="toast" class="toast" role="status" hidden></div>
 
-  <script src="config.js?v=236c1256"></script>
+  <script src="config.js?v=9023cdb1"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="logica.js?v=210e470e"></script>
+  <script src="logica.js?v=b2a840d6"></script>
   <script src="demo-catalogo.js?v=35fc6577"></script>
-  <script src="catalogo.js?v=6019b3fc"></script>
-  <script src="datos.js?v=bd9f99ce"></script>
-  <script src="tienda.js?v=3a375448"></script>
+  <script src="catalogo.js?v=27c7becd"></script>
+  <script src="datos.js?v=be40b402"></script>
+  <script src="tienda.js?v=286a8e31"></script>
 </body>
 </html>

@@ -29,5 +29,10 @@ window.TIENDA_CONFIG = {
 
   // true = junto a cada precio se avisa que es de referencia y que se confirma por WhatsApp.
   // Ponlo en false cuando hayas cargado tus precios reales.
-  preciosReferencia: true,
+  preciosReferencia: false,                      // 27-nov: los precios ya son los tuyos (con caja / sin caja)
+
+  // Hoja de Google con precios y disponibilidad, para cambiarlos desde el celular (27-nov).
+  // Pega aquí el enlace de la hoja (Compartir → «Cualquier persona con el enlace» → Lector).
+  // Vacío = la tienda usa los precios de catalogo.js. Columnas: id · marca · nombre · sin caja · con caja · disponible · visible
+  hojaCatalogo: '',
 };

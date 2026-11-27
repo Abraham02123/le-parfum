@@ -33,14 +33,14 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   ok(L.filtrar(cat, { soloDisponibles: true }).every((p) => p.stock > 0), 'solo disponibles');
   ok(L.filtrar(cat, {}).length === cat.length, 'los agotados siguen visibles');
   ok(L.filtrar(cat, { marcas: ['Lattafa'], familias: ['Dulce'] }).every((p) => p.marca === 'Lattafa' && p.familia === 'Dulce'), 'marca+familia');
-  ok(L.disponibilidad({ stock: 0 }).clase === 'encargo' && L.disponibilidad({ stock: 2 }).clase === 'pocas', 'etiquetas');
+  ok(L.disponibilidad({ stock: 0 }).clase === 'encargo' && L.disponibilidad({ stock: 2 }).clase === 'ok' && L.disponibilidad({ disponible: 'sin_caja' }).texto === 'Disponible: saldo sin caja', 'etiquetas (27-nov: con caja / sin caja / no disponible)');
 
   // pedido: Bleu de Chanel tiene 3; pido 5 → 3 se descuentan, 2 por encargo; Asad (0) → todo por encargo
   const bleu = cat.find((p) => p.nombre === 'Bleu de Chanel'), asad = cat.find((p) => p.nombre === 'Asad');
   const r = await D.crearPedido({ nombre: 'Ana', telefono: '300', direccion: 'Calle 1', metodo_pago: 'contra_entrega',
     items: [{ perfume_id: bleu.id, cantidad: 5 }, { perfume_id: asad.id, cantidad: 1, precio: 0.01 }] });
   ok(r.total === bleu.precio * 5 + asad.precio, 'total con precios del catálogo (ignora precio del cliente)');
-  ok(r.items[0].en_stock === 3 && r.items[0].por_encargo === 2 && r.items[1].por_encargo === 1, 'reparto stock/encargo');
+  ok(r.items[0].en_stock === 5 && r.items[0].por_encargo === 0 && r.items[1].por_encargo === 1, 'reparto disponible / te lo conseguimos (27-nov: la disponibilidad es sí o no por versión, no por unidades)');
   let ahora = await D.perfumes();
   ok(ahora.find((p) => p.id === bleu.id).stock === 0, 'inventario descontado');
   ok(ahora.some((p) => p.id === bleu.id), 'agotado sigue en el catálogo');
@@ -89,5 +89,27 @@ let n = 0; const ok = (c, m) => { assert.ok(c, m); n++; };
   ok((await W.perfumes()).length === 500, 'modo whatsapp muestra los 500');
   const pw = await W.crearPedido({ nombre: 'Ana', telefono: '300', direccion: 'Calle 1', metodo_pago: 'transferencia', items: [{ perfume_id: C5[0].id, cantidad: 2 }] });
   ok(pw.total === C5[0].precio * 2, 'modo whatsapp calcula el total');
+  // ── 27-nov: con caja / sin caja ──
+  const escal = new Set(C5.map((p) => `${p.precio_sin_caja}/${p.precio_con_caja}`));
+  ok([...escal].every((e) => ['750/1750', '850/1850', '950/1950', '950/2500'].includes(e)) && escal.size === 4, 'los 4 escalones de precio: ' + [...escal]);
+  ok(C5.every((p) => p.precio === p.precio_sin_caja && p.disponible === 'no'), 'precio = sin caja y todo «no disponible» hasta que la hoja diga otra cosa');
+  ok(C5.filter((p) => p.marca === 'Le Labo').every((p) => p.precio_con_caja === 2500), 'Le Labo con caja a 2500');
+  const p0 = C5[0];
+  const pc = await W.crearPedido({ items: [{ perfume_id: p0.id, caja: 'con', cantidad: 1 }, { perfume_id: p0.id, caja: 'sin', cantidad: 2 }] });
+  ok(pc.total === p0.precio_con_caja + 2 * p0.precio_sin_caja, 'un perfume con caja y otro sin caja suman cada uno su precio');
+  ok(pc.items[0].nombre.endsWith(', con caja') && pc.items[1].nombre.endsWith(', sin caja') && pc.items.every((l) => l.por_encargo === l.cantidad), 'cada línea dice su versión y va «te lo conseguimos»');
+  const t = fs.readFileSync(__dirname + '/tienda.js', 'utf8');
+  ok(!/este pedido \(\$\{r\.id\}\)/.test(t) && t.includes("'Hola, quiero hacer este pedido:'"), 'el mensaje de WhatsApp ya no lleva el código del pedido');
+  ok(!/whatsapp-listo'\)\.addEventListener\('click'[^\n]*carrito = \[\]/.test(t), 'enviar por WhatsApp no vacía el carrito');
+  ok(!t.includes('e.target.reset()'), 'el formulario conserva lo escrito');
+  // hoja de Google: precios con formatos de México y de Excel en español, disponibilidad con palabras, filas mal escritas ignoradas
+  ok(L.pesos('$1,950.00') === 1950 && L.pesos('1.950,00') === 1950 && L.pesos('950') === 950, 'precios escritos de varias formas');
+  ok(['con caja', 'sin caja', 'con y sin caja', 'no disponible'].map(L.leerDisponible).join() === 'con_caja,sin_caja,ambas,no', 'las 4 palabras de disponibilidad');
+  const csv = 'id,marca,nombre,Sin caja,Con caja,Disponible,Visible\n' + `${p0.id},x,x,"$800","2,100",con y sin caja,si\n${C5[1].id},x,x,abc,5,,no\n`;
+  const h = L.aplicarHoja(C5, csv), a0 = h.lista.find((p) => p.id === p0.id), a1 = h.lista.find((p) => p.id === C5[1].id);
+  ok(a0.precio_sin_caja === 800 && a0.precio_con_caja === 2100 && a0.disponible === 'ambas' && a0.precio === 800, 'la hoja cambia precios y disponibilidad');
+  ok(a1.precio_sin_caja === C5[1].precio_sin_caja && a1.precio_con_caja === C5[1].precio_con_caja && a1.visible === false, 'una celda mal escrita deja el precio como estaba');
+  ok(h.coinciden === 2 && C5[0].precio_sin_caja !== 800, 'la hoja no modifica el catálogo original');
+  ok(L.urlHoja('https://docs.google.com/spreadsheets/d/ABC_123/edit?usp=sharing') === 'https://docs.google.com/spreadsheets/d/ABC_123/gviz/tq?tqx=out:csv&headers=1', 'enlace de la hoja → CSV');
   console.log(`TODAS OK (${n} comprobaciones)`);
 })().catch((e) => { console.error('FALLA:', e.message); process.exit(1); });

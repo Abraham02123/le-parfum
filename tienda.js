@@ -82,13 +82,21 @@
     if (f.q) chips.push(['q', '', `«${f.q}»`]);
     for (const c of ['familias', 'marcas', 'concentraciones', 'tamanos']) f[c].forEach((v) => chips.push([c, v, c === 'tamanos' ? v + ' ml' : v]));
     if (f.min !== '' || f.max !== '') chips.push(['precio', '', `${f.min !== '' ? dinero(+f.min) : '0'} a ${f.max !== '' ? dinero(+f.max) : 'más'}`]);
-    if (f.soloDisponibles) chips.push(['disp', '', 'Solo con existencias']);
+    if (f.soloDisponibles) chips.push(['disp', '', 'Solo disponibles ahora']);
     $('#activos').innerHTML = chips.map(([c, v, t]) => `<button class="quitar" data-quitar="${c}" data-valor="${esc(v)}" aria-label="Quitar filtro ${esc(t)}">${esc(t)}<span aria-hidden="true">×</span></button>`).join('');
     const n = chips.length;
     $('#abrir-filtros').textContent = n ? `Filtros (${n})` : 'Filtros';
   }
 
   // ── Catálogo ────────────────────────────────────────────────────────────
+  // Cada perfume tiene dos versiones con su precio (27-nov): con caja y sin caja. Cada botón agrega esa versión.
+  // La versión que hay ahora se marca con un punto verde; la otra se puede pedir igual (te lo conseguimos).
+  const CAJAS = [['con', 'Con caja'], ['sin', 'Sin caja']];
+  const opciones = (p, clase, etiqueta, sub) => CAJAS.map(([caja, t]) => {
+    const h = L.hay(p, caja);
+    return `<button class="${clase}${h ? ' hay' : ''}" data-agregar="${p.id}" data-caja="${caja}" aria-label="${etiqueta(caja)}">
+      <span class="op-caja">${t}</span><b class="op-precio">${dinero(L.precioDe(p, caja))}</b>${sub ? `<small>${sub(h)}</small>` : ''}</button>`;
+  }).join('');
   function tarjeta(p) {
     const d = L.disponibilidad(p);
     const oferta = p.precio_antes > p.precio;
@@ -99,10 +107,7 @@
         <p class="t-marca">${esc(p.marca)}</p>
         <h3><a class="enlace-ficha" href="p/${p.id}.html" data-ver="${p.id}">${esc(p.nombre)}</a></h3>
         <p class="t-familia">${p.familia ? `<i style="--tono:${TONOS[p.familia] || '#B97A2B'}"></i>${esc(p.familia)}` : ''}</p>
-        <div class="t-pie">
-          <p class="precio">${dinero(p.precio)}${oferta ? ` <s>${dinero(p.precio_antes)}</s>` : ''}</p>
-          <button class="agregar" data-agregar="${p.id}" aria-label="Agregar ${esc(nombreCompleto(p))} al carrito">Agregar</button>
-        </div>
+        <div class="t-precios">${opciones(p, 'opcion-precio', (caja) => `Agregar ${esc(nombreCompleto(p))} ${caja} caja al carrito`)}</div>
         <p class="disp ${d.clase}">${esc(d.texto)}</p>
       </div></article>`;
   }
@@ -131,7 +136,7 @@
   const piramide = (t, notas) => notas ? `<div class="capa-nota"><h4>${t}</h4><p>${notas.split(',').map((n) => `<span>${esc(n.trim())}</span>`).join('')}</p></div>` : '';
   function abrirFicha(id) {
     const p = catalogo.find((x) => String(x.id) === String(id)); if (!p) return;
-    const d = L.disponibilidad(p), oferta = p.precio_antes > p.precio;
+    const d = L.disponibilidad(p);
     const acordes = (p.acordes || []).slice(0, 5);
     const parecidos = catalogo.filter((x) => x.id !== p.id && x.familia === p.familia && x.genero === p.genero)
       .sort(L.ORDENES.populares).slice(0, 4);
@@ -142,12 +147,13 @@
         <p class="f-marca">${esc(p.marca)}</p>
         <h2 id="ficha-titulo">${esc(p.nombre)}</h2>
         <ul class="f-detalles">${detalles.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-        <p class="f-precio">${dinero(p.precio)}${oferta ? ` <s>${dinero(p.precio_antes)}</s>` : ''}</p>
+        <p class="f-elige">Elige cómo lo quieres y se agrega a tu carrito:</p>
+        <div class="f-opciones">${opciones(p, 'opcion-ficha', (caja) => `Agregar ${esc(nombreCompleto(p))} ${caja} caja al carrito`,
+          (h) => h ? 'Disponible ahora' : 'Te lo conseguimos en 2 días a 1 semana')}</div>
         ${C.preciosReferencia ? `<p class="f-nota-precio">Precio de referencia. Te confirmamos el precio final y la presentación por WhatsApp antes de enviar.</p>` : ''}
         <p class="disp ${d.clase}">${esc(d.texto)}</p>
         <div class="f-comprar">
-          <button class="btn btn-tinta" data-agregar="${p.id}">Agregar al carrito</button>
-          ${WA ? `<a class="btn btn-borde" target="_blank" rel="noopener" href="${waLink(`Hola, me interesa ${nombreCompleto(p)}. ¿Está disponible?`)}">Preguntar por WhatsApp</a>` : ''}
+          ${WA ? `<a class="btn btn-borde" target="_blank" rel="noopener" href="${waLink(`Hola, me interesa ${nombreCompleto(p)}. ¿Lo tienen con caja o sin caja?`)}">Preguntar por WhatsApp</a>` : ''}
         </div>
         ${acordes.length ? `<section class="f-acordes"><h3>Cómo huele</h3>${acordes.map((a, i) => `<div class="acorde"><span>${esc(a)}</span><b style="--ancho:${100 - i * 16}%"></b></div>`).join('')}</section>` : ''}
         ${(p.notas_salida || p.notas_corazon || p.notas_fondo) ? `<section class="f-piramide"><h3>Sus notas</h3>
@@ -180,30 +186,35 @@
 
   // ── Carrito ─────────────────────────────────────────────────────────────
   const guardarCarrito = () => { try { localStorage.setItem('tienda_carrito', JSON.stringify(carrito)); } catch { /* navegador sin espacio: el carrito sigue en memoria */ } };
-  function agregar(id) {
-    const l = carrito.find((x) => String(x.perfume_id) === String(id));
-    if (l) l.cantidad = Math.min(50, l.cantidad + 1); else carrito.push({ perfume_id: catalogo.find((p) => String(p.id) === String(id)).id, cantidad: 1 });
+  // Carritos guardados antes del 27-nov no tienen «caja»: cuentan como «sin caja» (el precio que se mostraba entonces).
+  const cajaDe = (l) => (l.caja === 'con' ? 'con' : 'sin');
+  const mismaLinea = (l, id, caja) => String(l.perfume_id) === String(id) && cajaDe(l) === caja;
+  function agregar(id, caja) {
+    caja = caja === 'con' ? 'con' : 'sin';
+    const p = catalogo.find((x) => String(x.id) === String(id)); if (!p) return;
+    const l = carrito.find((x) => mismaLinea(x, id, caja));
+    if (l) l.cantidad = Math.min(50, l.cantidad + 1); else carrito.push({ perfume_id: p.id, caja, cantidad: 1 });
     guardarCarrito(); pintarCarrito();
-    const p = catalogo.find((x) => String(x.id) === String(id));
-    aviso(`${p.nombre} está en tu carrito`);
+    aviso(`${p.nombre}, ${caja} caja, está en tu carrito`);
     const c = $('#abrir-carrito'); c.classList.remove('late'); void c.offsetWidth; c.classList.add('late');
   }
-  const lineasValidas = () => carrito.map((l) => ({ ...l, p: catalogo.find((x) => x.id === l.perfume_id) })).filter((l) => l.p);
+  const lineasValidas = () => carrito.map((l) => ({ ...l, caja: cajaDe(l), p: catalogo.find((x) => x.id === l.perfume_id) })).filter((l) => l.p);
   function pintarCarrito() {
     const ls = lineasValidas();
     const n = ls.reduce((s, l) => s + l.cantidad, 0);
     $('#cuenta-carrito').textContent = n; $('#cuenta-carrito').hidden = !n;
-    const total = ls.reduce((s, l) => s + l.cantidad * l.p.precio, 0);
+    const total = ls.reduce((s, l) => s + l.cantidad * L.precioDe(l.p, l.caja), 0);
     $('#lineas-carrito').innerHTML = ls.length ? ls.map((l) => {
-      const enc = Math.max(0, l.cantidad - Math.max(0, l.p.stock));
-      return `<li class="linea"><div class="linea-foto">${imagen(l.p)}</div><div class="linea-texto"><b>${esc(l.p.nombre)}</b><small>${esc(l.p.marca)}</small>
-        ${enc ? `<small class="encargo-txt">${enc === l.cantidad ? 'Por encargo' : enc + ' por encargo'}</small>` : ''}</div>
-        <div class="cant"><button data-c="-1" data-id="${l.p.id}" aria-label="Quitar uno">−</button><span>${l.cantidad}</span><button data-c="1" data-id="${l.p.id}" aria-label="Agregar uno">+</button></div>
-        <b class="linea-precio">${dinero(l.cantidad * l.p.precio)}</b></li>`;
-    }).join('') : '<li class="vacio-carrito">Tu carrito está vacío. Elige un perfume y pulsa «Agregar».</li>';
+      const ya = L.hay(l.p, l.caja);
+      return `<li class="linea"><div class="linea-foto">${imagen(l.p)}</div><div class="linea-texto"><b>${esc(l.p.nombre)}</b><small>${esc(l.p.marca)} · <span class="linea-caja">${l.caja === 'con' ? 'Con caja' : 'Sin caja'}</span></small>
+        <small class="${ya ? 'ya-txt' : 'encargo-txt'}">${ya ? 'Disponible ahora' : 'Te lo conseguimos en 2 días a 1 semana'}</small></div>
+        <div class="cant"><button data-c="-1" data-id="${l.p.id}" data-caja="${l.caja}" aria-label="Quitar uno">−</button><span>${l.cantidad}</span><button data-c="1" data-id="${l.p.id}" data-caja="${l.caja}" aria-label="Agregar uno">+</button></div>
+        <b class="linea-precio">${dinero(l.cantidad * L.precioDe(l.p, l.caja))}</b></li>`;
+    }).join('') : '<li class="vacio-carrito">Tu carrito está vacío. Elige un perfume y pulsa «Con caja» o «Sin caja».</li>';
     $('#total-carrito').textContent = dinero(total);
     $('#total-pedido').textContent = dinero(total);
-    const hayEncargo = ls.some((l) => l.cantidad > l.p.stock);
+    $('#vaciar-carrito').hidden = !ls.length;
+    const hayEncargo = ls.some((l) => !L.hay(l.p, l.caja));
     $('#nota-encargo').hidden = !hayEncargo;
     $('#nota-precios').hidden = !(C.preciosReferencia && ls.length);
     $('#ir-pagar').disabled = !ls.length;
@@ -211,11 +222,12 @@
 
   // ── Pedido ──────────────────────────────────────────────────────────────
   function textoWhatsApp(r, datos) {
-    const lin = r.items.map((l) => `- ${l.cantidad} × ${l.nombre}: ${dinero(l.precio * l.cantidad)}${l.por_encargo ? ` (${l.por_encargo} por encargo)` : ''}`);
+    const lin = r.items.map((l) => `- ${l.cantidad} × ${l.nombre}: ${dinero(l.precio * l.cantidad)}${l.por_encargo ? ` (no disponible ahora: ${L.PLAZO})` : ''}`);
     // Solo lo que el cliente quiso poner: todo es opcional (26-nov); la dirección se pide por WhatsApp.
     const pago = { contra_entrega: 'efectivo al recibir', transferencia: 'transferencia', en_linea: 'tarjeta en línea' }[datos.metodo_pago];
     const extra = [datos.nombre && `Nombre: ${datos.nombre}`, pago && `Prefiero pagar con: ${pago}`, datos.notas && `Comentarios: ${datos.notas}`].filter(Boolean);
-    return [`Hola, quiero hacer este pedido (${r.id}):`, ...lin, `Total: ${dinero(r.total)}`, ...(extra.length ? ['', ...extra] : [])].join('\n').trim();
+    // Sin el código del pedido (27-nov: «quita el código como este: (W2OK0O) en el mensaje»).
+    return ['Hola, quiero hacer este pedido:', ...lin, `Total: ${dinero(r.total)}`, ...(extra.length ? ['', ...extra] : [])].join('\n').trim();
   }
   async function confirmar(e) {
     e.preventDefault();
@@ -224,12 +236,12 @@
     const datos = omitir ? {} : Object.fromEntries([...new FormData(e.target).entries()].map(([k, v]) => [k, String(v).trim()]));
     const btn = $('#confirmar'); btn.disabled = true; $('#error-pedido').hidden = true;
     try {
-      const r = await D.crearPedido({ ...datos, items: lineasValidas().map((l) => ({ perfume_id: l.perfume_id, cantidad: l.cantidad })) });
+      const r = await D.crearPedido({ ...datos, items: lineasValidas().map((l) => ({ perfume_id: l.perfume_id, caja: l.caja, cantidad: l.cantidad })) });
       const enc = r.items.reduce((s, l) => s + (l.por_encargo || 0), 0);
       cerrar('#capa-pedido');
       if (D.modo === 'whatsapp') {
         $('#titulo-listo').textContent = 'Falta un paso: envíalo';
-        $('#texto-listo').textContent = `Pulsa el botón y se abrirá WhatsApp con tu pedido ya escrito. Solo tienes que enviarlo; ahí te pedimos la dirección y acordamos la entrega y el pago. Total ${dinero(r.total)}.${enc ? ` ${enc} ${enc === 1 ? 'unidad va' : 'unidades van'} por encargo: te avisamos el plazo.` : ''}`;
+        $('#texto-listo').textContent = `Pulsa el botón y se abrirá WhatsApp con tu pedido ya escrito. Solo tienes que enviarlo; ahí te pedimos la dirección y acordamos la entrega y el pago. Total ${dinero(r.total)}.${enc ? ` Lo que no está disponible ahora te lo conseguimos en 2 días a 1 semana.` : ''} Tu carrito se queda guardado por si quieres cambiar algo o volver a enviarlo.`;
       } else {
         $('#titulo-listo').textContent = '¡Pedido recibido!';
         $('#texto-listo').textContent = `Tu pedido #${r.id} por ${dinero(r.total)} quedó registrado. Te contactaremos para coordinar la entrega y el pago.${enc ? ` ${enc} ${enc === 1 ? 'unidad va' : 'unidades van'} por encargo: te avisamos el plazo.` : ''}`;
@@ -241,7 +253,6 @@
       if (WA) w.href = waLink(textoWhatsApp(r, datos));
       w.textContent = D.modo === 'whatsapp' ? 'Enviar mi pedido por WhatsApp' : 'Avisar por WhatsApp (opcional)';
       abrir('#capa-listo');
-      e.target.reset();
     } catch (err) {
       $('#error-pedido').textContent = err.message.startsWith('Falta') ? 'Completa nombre, teléfono y dirección.' : 'No se pudo registrar: ' + err.message;
       $('#error-pedido').hidden = false;
@@ -258,7 +269,14 @@
     ['Madera y cuero', 'Sándalo, cedro, cuero, oud', ['Amaderada', 'Cuero y oud']],
     ['Frutal', 'Durazno, frutos rojos, piña', ['Frutal']],
   ];
-  const PRESUPUESTOS = [['Hasta $1,999', '', 1999], ['De $2,000 a $3,000', 2000, 3000], ['Más de $3,000', 3000, ''], ['Me da igual', '', '']];
+  // Se filtra por el precio sin caja (el más bajo de cada perfume): 750 / 850 / 950 desde el 27-nov.
+  const PRESUPUESTOS = [['Los más económicos', '', 799], ['Intermedios', 800, 899], ['Los más finos', 900, ''], ['Me da igual', '', '']];
+  function rangoPresupuesto([, min, max]) {
+    const en = catalogo.filter((p) => (min === '' || p.precio >= min) && (max === '' || p.precio <= max));
+    if (!en.length) return '';
+    const r = (k) => { const v = en.map((p) => L.precioDe(p, k)); const a = Math.min(...v), b = Math.max(...v); return a === b ? dinero(a) : `${dinero(a)} a ${dinero(b)}`; };
+    return `Sin caja ${r('sin')} · con caja ${r('con')}`;
+  }
   const quiz = { paso: 0, categoria: 'todos', familias: [], min: '', max: '' };
   function pintarQuiz() {
     const familiasHay = new Set(catalogo.map((p) => p.familia));
@@ -267,7 +285,8 @@
         `<button class="opcion-quiz" data-q="categoria" data-v="${v}">${t}</button>`)],
       ['¿Qué olor te gusta más?', OLORES.map(([t, d, fs], i) => fs.some((x) => familiasHay.has(x))
         ? `<button class="opcion-quiz" data-q="olor" data-v="${i}"><b>${t}</b><small>${d}</small></button>` : '')],
-      ['¿Cuánto quieres gastar?', PRESUPUESTOS.map(([t], i) => `<button class="opcion-quiz" data-q="precio" data-v="${i}">${t}</button>`)],
+      ['¿Cuánto quieres gastar?', PRESUPUESTOS.map((b, i) => { const r = b[1] === '' && b[2] === '' ? '' : rangoPresupuesto(b);
+        return `<button class="opcion-quiz" data-q="precio" data-v="${i}"><b>${b[0]}</b>${r ? `<small>${r}</small>` : ''}</button>`; })],
     ];
     const [titulo, opciones] = pasos[quiz.paso];
     $('#quiz-paso').textContent = `Pregunta ${quiz.paso + 1} de ${pasos.length}`;
@@ -362,7 +381,7 @@
       const fav = e.target.closest('[data-fav]');
       if (fav) { alternarFav(fav.dataset.fav); return; }
       const ver = e.target.closest('[data-ver]'), ag = e.target.closest('[data-agregar]'), comp = e.target.closest('[data-compartir]');
-      if (ag) { agregar(ag.dataset.agregar); return; }
+      if (ag) { agregar(ag.dataset.agregar, ag.dataset.caja); return; }
       // El nombre es un enlace a la página propia del perfume (para Google y para abrir en otra pestaña);
       // un clic normal abre la ficha aquí mismo, sin salir de la tienda.
       if (ver) { if (ver.tagName === 'A' && (e.ctrlKey || e.metaKey || e.shiftKey)) return; e.preventDefault(); abrirFicha(ver.dataset.ver); return; }
@@ -376,7 +395,7 @@
     });
     $('#lineas-carrito').addEventListener('click', (e) => {
       const b = e.target.closest('button[data-c]'); if (!b) return;
-      const l = carrito.find((x) => String(x.perfume_id) === b.dataset.id);
+      const l = carrito.find((x) => mismaLinea(x, b.dataset.id, b.dataset.caja)); if (!l) return;
       l.cantidad = Math.min(50, l.cantidad + +b.dataset.c);
       carrito = carrito.filter((x) => x.cantidad > 0); guardarCarrito(); pintarCarrito();
     });
@@ -386,8 +405,11 @@
     $('#quiz-atras').addEventListener('click', () => { quiz.paso = Math.max(0, quiz.paso - 1); pintarQuiz(); });
     $('#ir-pagar').addEventListener('click', () => { cerrar('#capa-carrito'); abrir('#capa-pedido'); });
     $('#form-pedido').addEventListener('submit', confirmar);
-    $('#whatsapp-listo').addEventListener('click', () => {
-      if (D.modo === 'whatsapp') { carrito = []; guardarCarrito(); pintarCarrito(); setTimeout(() => cerrar('#capa-listo'), 400); }
+    // Enviar por WhatsApp NO vacía el carrito (27-nov): el cliente puede volver, cambiar algo o no haberlo mandado.
+    $('#whatsapp-listo').addEventListener('click', () => { if (D.modo === 'whatsapp') setTimeout(() => cerrar('#capa-listo'), 400); });
+    $('#vaciar-carrito').addEventListener('click', () => {
+      if (!confirm('¿Quitar todos los perfumes de tu carrito?')) return;
+      carrito = []; guardarCarrito(); pintarCarrito(); aviso('Carrito vacío');
     });
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;

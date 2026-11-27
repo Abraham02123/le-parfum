@@ -84,6 +84,15 @@ def precio_de(x, t):
     if t == 'nicho': return 245
     return 95
 
+# Precios del dueño (27-nov): saldo SIN caja y saldo CON caja, en 3 escalones según lo caro que es el perfume
+# (se agrupa por el precio de referencia de arriba) y un 4.º con caja para lo más fino (Tom Ford, Le Labo, Creed…).
+# Pedido literal: «sin caja 750, 850 y 950, con caja 1750, 1850 y 1950 (y los más caros en 2500)».
+def escalon(ref):
+    if ref <= 1499: return 750, 1750      # árabes y económicos (Armaf, Lattafa, CK, Lacoste…)
+    if ref <= 2299: return 850, 1850      # diseñador medio (Versace, Hugo Boss, Mugler, Carolina Herrera…)
+    if ref <= 2799: return 950, 1950      # diseñador alto (Chanel, Dior, YSL, Hermès, Montale…)
+    return 950, 2500                      # premium y nicho (Tom Ford, Le Labo, Byredo, Creed, MFK, Kilian…)
+
 def concentracion_de(nombre):
     n = nombre.lower()
     for pat, c in ((r'extrait', 'Extrait'), (r'eau de parfum|\bedp\b', 'EDP'), (r'eau de toilette|\bedt\b', 'EDT'),
@@ -125,20 +134,25 @@ for orden, x in enumerate(sel):
     foto = RAIZ / 'img' / f"{x['fid']}.webp"
     if not foto.exists(): sin_foto.append(x['fid'])
     p = {'id': x['fid'], 'nombre': nm['nombre'], 'marca': nm['marca'], 'genero': x['genero'], 'tipo': t, 'familia': fam,
-         'concentracion': concentracion_de(nm['nombre']), 'ml': None, 'precio': int(a_pesos(precio_de(x, t))), 'precio_antes': None, 'stock': 0,
+         'concentracion': concentracion_de(nm['nombre']), 'ml': None, 'precio': None, 'precio_antes': None, 'stock': 0,
          'notas_salida': ', '.join(lista_es(x['salida'])) or None, 'notas_corazon': ', '.join(lista_es(x['corazon'])) or None,
          'notas_fondo': ', '.join(lista_es(x['fondo'])) or None,
          'acordes': [cap(tr(a)) for a in x['acordes']], 'votos': x['votos'], 'anio': x['anio'],
          'imagen_url': f"img/{x['fid']}.webp" if foto.exists() else None,
          'destacado': orden < 12, 'visible': True, 'creado': hoy}
     p['descripcion'] = descripcion(p, x)
+    ref = int(a_pesos(precio_de(x, t)))
+    p['precio_sin_caja'], p['precio_con_caja'] = escalon(ref)
+    p['precio'] = p['precio_sin_caja']   # el más barato: lo usan los filtros y el orden por precio
+    p['disponible'] = 'no'                # con_caja | sin_caja | ambas | no — se cambia en la hoja de Google
+    p['_ref'] = ref
     salida.append(p)
 
 ver = datetime.datetime.now().strftime('%Y%m%d%H%M')
-js = ('// Catálogo de la tienda: lo genera datos/armar_catalogo.py (no editar a mano; para cambiar precios y existencias\n'
-      '// usar el panel: Exportar lista → editar en Excel → Importar). Precios de referencia por marca; existencias en 0.\n'
+js = ('// Catálogo de la tienda: lo genera datos/armar_catalogo.py (no editar a mano; para cambiar precios y disponibilidad\n'
+      '// la hoja de Google: config.js → hojaCatalogo). Precio sin caja / con caja por escalones (27-nov); disponible = no.\n'
       f"window.CATALOGO_VERSION = '{ver}';\nwindow.CATALOGO = [\n"
-      + ',\n'.join(json.dumps(p, ensure_ascii=False, separators=(',', ':')) for p in salida) + '\n];\n')
+      + ',\n'.join(json.dumps({k: v for k, v in p.items() if not k.startswith('_')}, ensure_ascii=False, separators=(',', ':')) for p in salida) + '\n];\n')
 (RAIZ / 'catalogo.js').write_text(js, encoding='utf-8')
 
 def q(v):
@@ -162,7 +176,7 @@ from collections import Counter
 print('perfumes:', len(salida), '· con foto:', len(salida) - len(sin_foto), '· sin foto:', len(sin_foto), '· sin familia:', sin_familia)
 print('familias:', dict(Counter(p['familia'] for p in salida)))
 print('tipos:', dict(Counter(p['tipo'] for p in salida)), '· géneros:', dict(Counter(p['genero'] for p in salida)))
-print('precios:', dict(sorted(Counter(p['precio'] for p in salida).items())))
+print('precios (sin caja, con caja):', dict(sorted(Counter((p['precio_sin_caja'], p['precio_con_caja']) for p in salida).items())))
 print('concentración:', dict(Counter(p['concentracion'] for p in salida)))
-print('marcas a 95 por defecto:', sorted({x['marca_slug'] for x, p in zip(sel, salida) if p['precio'] == a_pesos(95)}))
+print('marcas a 95 por defecto:', sorted({x['marca_slug'] for x, p in zip(sel, salida) if p['_ref'] == a_pesos(95)}))
 print('versión:', ver)

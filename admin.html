@@ -77,7 +77,7 @@
           <button class="btn btn-dorado" id="nuevo">+ Nuevo perfume</button>
         </div>
         <div class="barra-admin barra-hoja">
-          <button class="btn btn-borde" id="bajar-hoja" title="Abre en Excel o Google Sheets: cambia precio, existencias o visible y vuelve a subirla">Descargar hoja de precios y existencias</button>
+          <button class="btn btn-borde" id="bajar-hoja" title="Abre en Excel o Google Sheets: cambia sin caja, con caja, disponible o visible y vuelve a subirla">Descargar hoja de precios y disponibilidad</button>
           <label class="btn btn-borde" for="subir-hoja">Subir hoja corregida</label>
           <input type="file" id="subir-hoja" accept=".csv,text/csv" hidden>
           <button class="btn btn-borde" id="bajar-catalogo" hidden>Descargar catalogo.js para publicar</button>
@@ -86,7 +86,7 @@
         <p class="nota-modo" id="nota-modo" hidden>Sin base de datos, lo que cambies aquí se guarda solo en este navegador. Para que lo vean
           los clientes: «Descargar catalogo.js para publicar» y reemplaza ese archivo en la página (o mándamelo y lo subo yo).</p>
         <table class="tabla">
-          <thead><tr><th>Perfume</th><th class="opc">Categoría</th><th>Precio</th><th>Existencias</th><th class="opc">Visible</th><th></th></tr></thead>
+          <thead><tr><th>Perfume</th><th class="opc">Categoría</th><th>Precio</th><th>Disponible</th><th class="opc">Visible</th><th></th></tr></thead>
           <tbody id="tabla-perfumes"></tbody>
         </table>
       </section>
@@ -107,8 +107,9 @@
         <label>Familia de aroma<input name="familia" list="lista-familias" placeholder="Dulce, Amaderada, Floral…"></label>
         <label>Concentración<select name="concentracion"><option>EDP</option><option>EDT</option><option>Parfum</option><option>Extrait</option><option>EDC</option></select></label>
         <label>Tamaño (ml)<input name="ml" type="number" min="1"></label>
-        <label>Existencias<input name="stock" type="number" min="0" required value="0"></label>
-        <label>Precio<input name="precio" type="number" min="0" step="0.01" required></label>
+        <label>Disponible<select name="disponible"><option value="no">No disponible</option><option value="con_caja">Con caja</option><option value="sin_caja">Sin caja</option><option value="ambas">Con y sin caja</option></select></label>
+        <label>Precio sin caja<input name="precio_sin_caja" type="number" min="0" step="1" required></label>
+        <label>Precio con caja<input name="precio_con_caja" type="number" min="0" step="1" required></label>
         <label>Precio antes (para mostrar rebaja)<input name="precio_antes" type="number" min="0" step="0.01"></label>
         <label class="entero">Foto (enlace a la imagen)<input name="imagen_url" type="url" placeholder="https://…"></label>
         <label class="entero">Descripción<textarea name="descripcion" rows="2"></textarea></label>
@@ -125,12 +126,12 @@
   <datalist id="lista-marcas"></datalist><datalist id="lista-familias"></datalist>
   <div id="toast" class="toast" hidden></div>
 
-  <script src="config.js?v=236c1256"></script>
+  <script src="config.js?v=9023cdb1"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="logica.js?v=210e470e"></script>
+  <script src="logica.js?v=b2a840d6"></script>
   <script src="demo-catalogo.js?v=35fc6577"></script>
-  <script src="catalogo.js?v=6019b3fc"></script>
-  <script src="datos.js?v=bd9f99ce"></script>
-  <script src="admin.js?v=3f57d196"></script>
+  <script src="catalogo.js?v=27c7becd"></script>
+  <script src="datos.js?v=be40b402"></script>
+  <script src="admin.js?v=93c50158"></script>
 </body>
 </html>

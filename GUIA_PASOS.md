@@ -81,15 +81,26 @@ mira que llega completo. Comparte el enlace por WhatsApp a alguien: debe salir l
 
 ---
 
-## Paso 4 · Tus precios y existencias reales — cuando quieras, 30 a 60 minutos tuyos
+## Paso 4 · Tus precios y disponibilidad, desde el celular — 10 minutos una vez
 
-Hoy los precios son **de referencia por marca** y todo sale «Por encargo» (existencias en 0).
+Hoy cada perfume tiene precio sin caja y con caja por escalones (750/850/950 y 1.750/1.850/1.950/2.500) y
+**todos dicen «no disponible: te lo conseguimos en 2 días a 1 semana»** hasta que lo cambies.
 
-**Qué haces tú (elige una):**
+**Qué haces tú (una sola vez):**
+1. En tu escritorio está `Le_Parfum_catalogo.xlsx`. Súbelo a Google Drive.
+2. Ábrelo en Drive → **Archivo → Guardar como Hojas de cálculo de Google**.
+3. **Compartir** → «Acceso general» → **Cualquier persona con el enlace** → **Lector** → copiar enlace.
+4. Mándame ese enlace. Yo lo conecto a la tienda y publico (5 minutos).
+
+**Después, cada día:** abres la hoja en la app **Hojas de cálculo de Google** del celular, cambias el precio o
+eliges la disponibilidad de la lista (con caja · sin caja · con y sin caja · no disponible). La tienda lo
+muestra en cuanto un cliente la abre o recarga. No toques la columna `id` ni la primera fila.
+
+**Otras formas (si prefieres):**
 - **A, la más fácil:** mándame tu lista como la tengas (Excel, foto de una libreta, texto, PDF): perfume,
   precio y cuántos tienes. Yo la cargo, aunque los nombres no coincidan exactos.
 - **B, tú mismo:** abre `admin.html` (el enlace de la tienda + `admin.html`), contraseña `demo123`, pestaña
-  «Perfumes e inventario» → «Descargar hoja de precios y existencias» → cambia en Excel → «Subir hoja
+  «Perfumes e inventario» → «Descargar hoja de precios y disponibilidad» → cambia en Excel → «Subir hoja
   corregida» → «Descargar catalogo.js para publicar» → mándame ese archivo.
 
 **Qué hago yo (15 minutos):** cargo la lista, aviso de los perfumes que no encontré en los 500 (los agrego
@@ -101,7 +112,7 @@ con foto si existen), publico y te mando captura.
 
 ## Paso 5 (opcional, más adelante) · Que el inventario baje solo con cada venta — 20 minutos tuyos
 
-Con el paso 3 los pedidos te llegan por WhatsApp, pero las existencias las ajustas tú (paso 4). Si vendes
+Con el paso 3 los pedidos te llegan por WhatsApp, pero la disponibilidad la ajustas tú (paso 4). Si vendes
 muchos y quieres que bajen solas y ver todos los pedidos en un panel, hace falta una base de datos gratuita.
 
 **Qué haces tú:**

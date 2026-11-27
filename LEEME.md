@@ -26,7 +26,23 @@ La primera vez pide haber entrado a GitHub con `gh auth login`. Crea el sitio
 `https://TU-USUARIO.github.io/tienda-perfumes/`, que abre cualquiera desde el móvil o el ordenador.
 Cada vez que se vuelve a correr sube los cambios; la tienda se actualiza en 1-2 minutos.
 
-## Cambiar precios y existencias sin tocar código
+## Cambiar precios y disponibilidad desde el celular (hoja de Google)
+
+Cada perfume tiene dos precios (**sin caja** y **con caja**) y una disponibilidad: `con caja`, `sin caja`,
+`con y sin caja` o `no disponible` (la tienda dice «te lo conseguimos en 2 días a 1 semana»).
+
+1. Subir `Le_Parfum_catalogo.xlsx` a Google Drive → abrirlo → **Archivo → Guardar como Hojas de cálculo de Google**.
+2. **Compartir → Cualquier persona con el enlace → Lector**. Copiar el enlace.
+3. Pegar ese enlace en `config.js` → `hojaCatalogo` y publicar (`bash publicar.sh`).
+
+Desde ahí se edita en la app de Google Sheets del celular. La tienda lee la hoja **cada vez que alguien la abre**
+(si la hoja no responde en 4 segundos, o trae menos de la mitad de los perfumes, usa `catalogo.js`). Las páginas
+de cada perfume para Google se rehacen solo al publicar. No cambiar la columna `id` ni los títulos; una fila nueva
+se ignora (un perfume nuevo necesita su foto: se agrega con `datos/armar_catalogo.py`).
+
+El panel (`admin.html`) descarga y sube la misma hoja en CSV, con las mismas columnas.
+
+## Lo de antes: el panel
 
 Panel (`admin.html`) → «Perfumes e inventario» → **Descargar hoja de precios y existencias** → abrirla en
 Excel o Google Sheets → cambiar las columnas `precio`, `stock` (existencias) o `visible` (si/no) → guardar
@@ -63,9 +79,14 @@ como CSV → **Subir hoja corregida**. Antes de aplicar dice cuántos cambian y 
   si la tienda crece conviene reescribir las descripciones con texto propio.
 - **Fotos**: las del frasco que publican las marcas (las mismas que muestra Fragrantica), guardadas aquí en
   formato liviano (6,5 MB las 500). Es práctica común en tiendas de perfumes; el pie de página lo aclara.
-- **Precios**: de referencia, por marca (no por perfume). La ficha y el carrito avisan que el precio final
-  se confirma por WhatsApp. Cambiarlos con la hoja de precios.
-- **Existencias**: todas en 0 → todo sale «Por encargo». Al poner existencias sale «Disponible».
+- **Precios** (27-nov, pedido del dueño): por escalones según lo caro del perfume — sin caja 750 / 850 / 950,
+  con caja 1.750 / 1.850 / 1.950, y 2.500 con caja para lo más fino (Tom Ford, Le Labo, Creed, Kilian…).
+  Lo fija `escalon()` en `datos/armar_catalogo.py`; se cambian perfume por perfume en la hoja de Google.
+- **Disponibilidad**: todos en `no disponible` al empezar → la tienda dice «te lo conseguimos en 2 días a
+  1 semana». Se cambia en la hoja.
+- **Carrito**: no se vacía al pulsar «Abrir WhatsApp» (el cliente puede volver y corregir); se vacía con
+  «Vaciar carrito». El mensaje ya no lleva código de pedido.
+- **Modo base de datos (Supabase)**: todavía no conoce los dos precios ni la disponibilidad; usar `whatsapp`.
 
 ## Reglas que ya trae
 

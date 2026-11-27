@@ -14,8 +14,34 @@
   const leer = (k, d) => { try { return JSON.parse(ls.getItem(k)) ?? d; } catch { return d; } };
   const guardar = (k, v) => { try { ls.setItem(k, JSON.stringify(v)); } catch (e) { throw new Error('El navegador no deja guardar más datos (' + e.message + ')'); } };
   const fallo = (error) => { if (error) throw new Error(error.message || String(error)); };
-  const desdeArchivo = () => base.map((x, i) => ({ id: x.id ?? i + 1, visible: true, destacado: false, stock: 0,
+  const desdeArchivo = () => base.map((x, i) => L.normalizar({ id: x.id ?? i + 1, visible: true, destacado: false, stock: 0,
     creado: new Date(Date.now() - i * 864e5).toISOString(), ...x }));
+
+  // Precios y disponibilidad desde la hoja de Google (27-nov): el dueño la cambia desde el celular y la tienda la lee
+  // al abrirse. Si la hoja no responde en 4 s o trae menos de la mitad de los perfumes, se usa catalogo.js tal cual:
+  // la tienda nunca se queda en blanco por la hoja. Se lee UNA vez por visita (la misma lista para ver y para pedir).
+  let vivoP = null;
+  function vivo() {
+    if (vivoP) return vivoP;
+    vivoP = (async () => {
+      const lista = desdeArchivo(), url = L.urlHoja(C.hojaCatalogo);
+      Datos.fuente = 'catalogo.js';
+      if (!url || typeof fetch !== 'function') return lista;
+      const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+      const t = setTimeout(() => ctl && ctl.abort(), 4000);
+      try {
+        const r = await fetch(url, { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+        if (!r.ok) throw new Error('respondió ' + r.status);
+        const h = L.aplicarHoja(lista, await r.text());
+        if (h.coinciden < lista.length / 2) throw new Error(`solo trae ${h.coinciden} de ${lista.length} perfumes`);
+        Datos.fuente = 'hoja'; return h.lista;
+      } catch (e) {
+        console.warn('No se pudo leer la hoja del catálogo; se usa catalogo.js. Motivo:', e.message);
+        return lista;
+      } finally { clearTimeout(t); }
+    })();
+    return vivoP;
+  }
 
   // Copia local editable (panel en modo demo/whatsapp y tienda en modo demo).
   function demoPerfumes() {
@@ -29,27 +55,27 @@
 
     // ── Tienda (cualquier visitante) ──────────────────────────────────────
     async perfumes() {
-      if (modo === 'whatsapp') return desdeArchivo().filter((p) => p.visible);
-      if (modo === 'demo') return demoPerfumes().filter((p) => p.visible);
+      if (modo === 'whatsapp') return (await vivo()).filter((p) => p.visible);
+      if (modo === 'demo') return demoPerfumes().filter((p) => p.visible).map(L.normalizar);
       const { data, error } = await sb.from('perfumes').select('*').eq('visible', true); fallo(error);
       return data;
     },
 
-    // ped = { nombre, telefono, direccion, ciudad, notas, metodo_pago, items:[{perfume_id, cantidad}] }
+    // ped = { nombre, notas, metodo_pago, items:[{perfume_id, cantidad, caja:'con'|'sin'}] }
     async crearPedido(ped) {
       // Con WhatsApp nada es obligatorio (26-nov): el cliente escribe desde su número y ahí se piden los datos.
       if (modo === 'supabase') for (const c of ['nombre', 'telefono', 'direccion']) if (!String(ped[c] || '').trim()) throw new Error('Falta ' + c);
       if (modo === 'whatsapp') {
         // Sin base de datos no hay número correlativo ni inventario compartido: el pedido se arma aquí
         // (con los precios del catálogo, no los del carrito) y se manda por WhatsApp.
-        const r = L.repartirPedido(ped.items, desdeArchivo());
+        const r = L.repartirPedido(ped.items, await vivo());
         const id = 'W' + Date.now().toString(36).slice(-5).toUpperCase();
         return { id, total: r.total, items: r.lineas };
       }
       if (modo === 'demo') {
         const ps = demoPerfumes();
-        const r = L.repartirPedido(ped.items, ps);
-        r.lineas.forEach((l) => { ps.find((x) => x.id === l.perfume_id).stock -= l.en_stock; });
+        const r = L.repartirPedido(ped.items, ps.map((x) => L.normalizar({ ...x })));
+        r.lineas.forEach((l) => { const x = ps.find((y) => y.id === l.perfume_id); l.descontado = Math.min(Math.max(0, x.stock || 0), l.en_stock); x.stock = (x.stock || 0) - l.descontado; });
         const os = leer(K.o, []);
         const id = os.reduce((m, o) => Math.max(m, o.id), 1000) + 1;
         const { items, ...campos } = ped;
@@ -125,7 +151,7 @@
         if (!o || o.estado === 'cancelado') throw new Error('Un pedido cancelado no se puede reabrir');
         if (estado === 'cancelado') {
           const ps = demoPerfumes();
-          o.items.forEach((l) => { const p = ps.find((x) => x.id === l.perfume_id); if (p) p.stock += l.en_stock; });
+          o.items.forEach((l) => { const p = ps.find((x) => x.id === l.perfume_id); if (p) p.stock += l.descontado ?? l.en_stock; });
           guardar(K.p, ps);
         }
         o.estado = estado; guardar(K.o, os); return;

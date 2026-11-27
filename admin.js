@@ -4,6 +4,8 @@
   const $ = (s) => document.querySelector(s);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const dinero = (n) => L.dinero(n, C);
+  // Las mismas palabras que la hoja de Google (27-nov); la hoja las vuelve a leer igual.
+  const DISP_TEXTO = { con_caja: 'con caja', sin_caja: 'sin caja', ambas: 'con y sin caja', no: 'no disponible' };
   const SIGUIENTE = { pendiente: ['confirmado', 'enviado', 'entregado', 'cancelado'], confirmado: ['enviado', 'entregado', 'cancelado'],
     enviado: ['entregado', 'cancelado'], entregado: ['cancelado'], cancelado: [] };
   let perfumes = [], pedidos = [];
@@ -21,9 +23,9 @@
     const pend = pedidos.filter((o) => o.estado === 'pendiente').length;
     const encargo = activos.filter((o) => !['entregado'].includes(o.estado)).reduce((s, o) => s + o.items.reduce((a, l) => a + (l.por_encargo || 0), 0), 0);
     const ventas = pedidos.filter((o) => o.estado === 'entregado').reduce((s, o) => s + +o.total, 0);
-    const sinStock = perfumes.filter((p) => p.visible && p.stock <= 0).length;
+    const sinStock = perfumes.filter((p) => p.visible && !L.hayAlgo(p)).length;
     $('#resumen').innerHTML = [['Pedidos pendientes', pend], ['Unidades por conseguir (encargo)', encargo],
-      ['Vendido (entregado)', dinero(ventas)], ['Perfumes sin existencias', sinStock]]
+      ['Vendido (entregado)', dinero(ventas)], ['Perfumes no disponibles', sinStock]]
       .map(([t, v]) => `<div><small>${t}</small><b>${v}</b></div>`).join('');
   }
 
@@ -53,8 +55,8 @@
     $('#tabla-perfumes').innerHTML = lista.map((p) => `<tr class="${p.visible ? '' : 'oculto'}">
       <td><b>${esc(p.marca)}</b> · ${esc(p.nombre)}<br><small style="color:var(--suave)">${esc([p.concentracion, p.ml && p.ml + ' ml'].filter(Boolean).join(' · '))}</small></td>
       <td class="opc">${esc(p.genero)} · ${esc({ arabe: 'árabe', disenador: 'diseñador', nicho: 'nicho' }[p.tipo] || p.tipo || '')}</td>
-      <td>${dinero(p.precio)}</td>
-      <td><span class="stock"><button data-mas="${p.id}" data-c="-1">−</button><b>${p.stock}</b><button data-mas="${p.id}" data-c="1">+</button></span></td>
+      <td>${dinero(L.precioDe(p, 'sin'))} sin caja<br>${dinero(L.precioDe(p, 'con'))} con caja</td>
+      <td>${esc(DISP_TEXTO[L.normalizar({ ...p }).disponible])}</td>
       <td class="opc">${p.visible ? 'sí' : 'oculto'}</td>
       <td><button class="enlace" data-editar="${p.id}">Editar</button></td></tr>`).join('');
     $('#lista-marcas').innerHTML = [...new Set(perfumes.map((p) => p.marca))].map((m) => `<option value="${esc(m)}">`).join('');
@@ -131,19 +133,20 @@
     const local = D.modo !== 'supabase';
     $('#bajar-catalogo').hidden = !local; $('#reiniciar-local').hidden = !local; $('#nota-modo').hidden = D.modo !== 'whatsapp';
     $('#bajar-hoja').onclick = () => {
-      const filas = [['id', 'marca', 'nombre', 'precio', 'stock', 'visible']]
-        .concat(perfumes.map((p) => [p.id, p.marca, p.nombre, String(p.precio).replace('.', ','), p.stock, p.visible ? 'si' : 'no']));
-      bajar('precios_y_existencias.csv', '﻿' + filas.map((f) => f.map(celda).join(';')).join('\r\n'), 'text/csv;charset=utf-8');
+      // Mismas columnas que la hoja de Google de la tienda: se puede subir a Drive tal cual.
+      const filas = [['id', 'marca', 'nombre', 'sin caja', 'con caja', 'disponible', 'visible']]
+        .concat(perfumes.map((p) => { const n = L.normalizar({ ...p });
+          return [n.id, n.marca, n.nombre, n.precio_sin_caja, n.precio_con_caja, DISP_TEXTO[n.disponible], n.visible ? 'si' : 'no']; }));
+      bajar('precios_y_disponibilidad.csv', '﻿' + filas.map((f) => f.map(celda).join(';')).join('\r\n'), 'text/csv;charset=utf-8');
     };
     $('#subir-hoja').onchange = async (e) => {
       const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-      const porId = new Map(perfumes.map((p) => [String(p.id), p])), cambios = [], malas = [];
-      for (const [i, r] of leerCsv(await f.text()).entries()) {
-        const p = porId.get(String(r.id || '').trim()); if (!p) { malas.push(i + 2); continue; }
-        const c = { id: p.id }, pr = numero(r.precio), st = numero(r.stock), vi = String(r.visible || '').toLowerCase();
-        if (r.precio !== undefined && r.precio !== '') { if (!(pr > 0)) { malas.push(i + 2); continue; } if (pr !== Number(p.precio)) c.precio = pr; }
-        if (r.stock !== undefined && r.stock !== '') { if (!(st >= 0) || !Number.isInteger(st)) { malas.push(i + 2); continue; } if (st !== p.stock) c.stock = st; }
-        if (vi) { const v = ['si', 'sí', '1', 'true', 'x'].includes(vi); if (v !== p.visible) c.visible = v; }
+      // Se lee igual que la hoja de Google (L.aplicarHoja): sin caja · con caja · disponible · visible.
+      const r = L.aplicarHoja(perfumes, await f.text()), porId = new Map(perfumes.map((p) => [p.id, L.normalizar({ ...p })]));
+      const malas = r.filas - r.coinciden > 0 ? [`${r.filas - r.coinciden} con un id que no existe`] : [], cambios = [];
+      for (const n of r.lista) {
+        const p = porId.get(n.id), c = { id: n.id };
+        for (const k of ['precio_sin_caja', 'precio_con_caja', 'precio', 'disponible', 'visible']) if (n[k] !== p[k]) c[k] = n[k];
         if (Object.keys(c).length > 1) cambios.push(c);
       }
       if (!cambios.length) return aviso(malas.length ? `Nada cambiado. Filas con error: ${malas.slice(0, 8).join(', ')}` : 'La hoja no trae cambios');
