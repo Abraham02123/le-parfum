@@ -1,0 +1,505 @@
+[
+ {
+  "fid": 115132,
+  "marca_slug": "armaf",
+  "nombre_slug": "odyssey-marshmallow",
+  "marca": "Armaf",
+  "nombre": "Odyssey Marshmallow",
+  "genero": "unisex",
+  "anio": 2025,
+  "acordes": [
+   "sweet",
+   "vanilla",
+   "fruity",
+   "powdery"
+  ],
+  "salida": [
+   "coconut",
+   "apple",
+   "lemon",
+   "peony"
+  ],
+  "corazon": [
+   "marshmallow",
+   "strawberry",
+   "peach",
+   "apricot",
+   "raspberry"
+  ],
+  "fondo": [
+   "mascarpone",
+   "praline",
+   "vanilla",
+   "tonka bean",
+   "musk"
+  ],
+  "arabe": true,
+  "fuente": "https://www.fragrantica.com/perfume/Armaf/Odyssey-Marshmallow-115132.html"
+ },
+ {
+  "fid": 115130,
+  "marca_slug": "armaf",
+  "nombre_slug": "odyssey-go-mango",
+  "marca": "Armaf",
+  "nombre": "Odyssey Go Mango",
+  "genero": "unisex",
+  "anio": 2025,
+  "acordes": [
+   "fruity",
+   "tropical",
+   "sweet",
+   "citrus"
+  ],
+  "salida": [
+   "lemon",
+   "pink pepper",
+   "ginger",
+   "white flowers"
+  ],
+  "corazon": [
+   "mango",
+   "tonka bean",
+   "dry wood"
+  ],
+  "fondo": [
+   "guaiac wood",
+   "amber",
+   "vanilla",
+   "nutty notes",
+   "musk"
+  ],
+  "arabe": true,
+  "fuente": "https://www.fragrantica.com/perfume/Armaf/Odyssey-Go-Mango-115130.html"
+ },
+ {
+  "fid": 98695,
+  "marca_slug": "armaf",
+  "nombre_slug": "odyssey-limoni-fresh",
+  "marca": "Armaf",
+  "nombre": "Odyssey Limoni Fresh",
+  "genero": "unisex",
+  "anio": 2024,
+  "acordes": [
+   "citrus",
+   "fresh spicy",
+   "aromatic",
+   "fresh",
+   "green"
+  ],
+  "salida": [
+   "lemon",
+   "sweet orange",
+   "mandarin",
+   "bergamot"
+  ],
+  "corazon": [
+   "ginger",
+   "marine"
+  ],
+  "fondo": [
+   "amber",
+   "tea",
+   "musk"
+  ],
+  "arabe": true,
+  "fuente": "https://www.fragrantica.com/perfume/Armaf/Odyssey-Limoni-Fresh-98695.html"
+ },
+ {
+  "fid": 95752,
+  "marca_slug": "lattafa-perfumes",
+  "nombre_slug": "yara-candy",
+  "marca": "Lattafa",
+  "nombre": "Yara Candy",
+  "genero": "mujer",
+  "anio": 2024,
+  "acordes": [
+   "sweet",
+   "fruity",
+   "vanilla",
+   "floral"
+  ],
+  "salida": [
+   "black currant",
+   "green tangerine"
+  ],
+  "corazon": [
+   "strawberry fizz candy",
+   "gardenia"
+  ],
+  "fondo": [
+   "vanilla",
+   "musk",
+   "amber",
+   "sandalwood"
+  ],
+  "arabe": true,
+  "fuente": "https://www.fragrantica.com/perfume/Lattafa-Perfumes/Yara-Candy-95752.html"
+ },
+ {
+  "fid": 12201,
+  "marca_slug": "le-labo",
+  "nombre_slug": "santal-33",
+  "marca": "Le Labo",
+  "nombre": "Santal 33",
+  "genero": "unisex",
+  "anio": 2011,
+  "acordes": [
+   "woody",
+   "aromatic",
+   "leather",
+   "powdery"
+  ],
+  "salida": [],
+  "corazon": [
+   "cardamom",
+   "iris",
+   "violet",
+   "ambrox",
+   "australian sandalwood",
+   "papyrus",
+   "cedarwood",
+   "leather",
+   "musky notes"
+  ],
+  "fondo": [],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Le-Labo/Santal-33-12201.html"
+ },
+ {
+  "fid": 132745,
+  "marca_slug": "bharara",
+  "nombre_slug": "king-soleil",
+  "marca": "Bharara",
+  "nombre": "King Soleil",
+  "genero": "unisex",
+  "anio": 2025,
+  "acordes": [
+   "citrus",
+   "fruity",
+   "woody",
+   "amber"
+  ],
+  "salida": [
+   "sicilian orange",
+   "calabrian bergamot",
+   "sicilian lemon"
+  ],
+  "corazon": [
+   "jasmine",
+   "sandalwood"
+  ],
+  "fondo": [
+   "hazelnut",
+   "chocolate",
+   "madagascar vanilla"
+  ],
+  "arabe": true,
+  "fuente": "https://www.fragrantica.com/perfume/Bharara/King-Soleil-132745.html"
+ },
+ {
+  "fid": 92687,
+  "marca_slug": "carolina-herrera",
+  "nombre_slug": "ch-birds-of-paradise-for-her",
+  "marca": "Carolina Herrera",
+  "nombre": "CH Birds Of Paradise For Her",
+  "genero": "mujer",
+  "anio": 2024,
+  "acordes": [
+   "fruity",
+   "vanilla",
+   "woody",
+   "coconut",
+   "powdery"
+  ],
+  "salida": [
+   "neroli",
+   "blackcurrant"
+  ],
+  "corazon": [
+   "coconut",
+   "rose"
+  ],
+  "fondo": [
+   "vanilla",
+   "sandalwood"
+  ],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Carolina-Herrera/CH-Birds-Of-Paradise-For-Her-92687.html"
+ },
+ {
+  "fid": 9007,
+  "marca_slug": "ralph-lauren",
+  "nombre_slug": "big-pony-3",
+  "marca": "Ralph Lauren",
+  "nombre": "Big Pony 3",
+  "genero": "hombre",
+  "anio": 2010,
+  "acordes": [
+   "citrus",
+   "fresh spicy",
+   "aromatic",
+   "woody"
+  ],
+  "salida": [],
+  "corazon": [
+   "mint",
+   "ginger"
+  ],
+  "fondo": [],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Ralph-Lauren/Big-Pony-3-9007.html"
+ },
+ {
+  "fid": 1197,
+  "marca_slug": "ralph-lauren",
+  "nombre_slug": "polo-black",
+  "marca": "Ralph Lauren",
+  "nombre": "Polo Black",
+  "genero": "hombre",
+  "anio": 2005,
+  "acordes": [
+   "woody",
+   "aromatic",
+   "fresh spicy",
+   "citrus"
+  ],
+  "salida": [],
+  "corazon": [
+   "mango",
+   "artemisia",
+   "patchouli",
+   "clary sage",
+   "sandalwood",
+   "tonka bean"
+  ],
+  "fondo": [],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Ralph-Lauren/Polo-Black-1197.html"
+ },
+ {
+  "fid": 10543,
+  "marca_slug": "katy-perry",
+  "nombre_slug": "purr",
+  "marca": "Katy Perry",
+  "nombre": "Purr",
+  "genero": "mujer",
+  "anio": 2010,
+  "acordes": [
+   "fruity",
+   "sweet",
+   "floral",
+   "vanilla"
+  ],
+  "salida": [
+   "peach",
+   "apple",
+   "gardenia",
+   "green bamboo"
+  ],
+  "corazon": [
+   "jasmine",
+   "pink freesia",
+   "rose"
+  ],
+  "fondo": [
+   "vanilla orchid",
+   "sandalwood",
+   "amber",
+   "coconut",
+   "musk"
+  ],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Katy-Perry/Purr-10543.html"
+ },
+ {
+  "fid": 13710,
+  "marca_slug": "katy-perry",
+  "nombre_slug": "meow",
+  "marca": "Katy Perry",
+  "nombre": "Meow!",
+  "genero": "mujer",
+  "anio": 2011,
+  "acordes": [
+   "fruity",
+   "sweet",
+   "floral",
+   "musky"
+  ],
+  "salida": [
+   "pear",
+   "tangerine",
+   "jasmine",
+   "gardenia"
+  ],
+  "corazon": [
+   "honeysuckle",
+   "lily of the valley",
+   "orange blossom"
+  ],
+  "fondo": [
+   "amber",
+   "vanilla",
+   "musk",
+   "sandalwood"
+  ],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Katy-Perry/Meow-13710.html"
+ },
+ {
+  "fid": 31468,
+  "marca_slug": "miu-miu",
+  "nombre_slug": "miu-miu",
+  "marca": "Miu Miu",
+  "nombre": "Miu Miu",
+  "genero": "mujer",
+  "anio": 2015,
+  "acordes": [
+   "green",
+   "floral",
+   "fresh",
+   "musky"
+  ],
+  "salida": [
+   "lily of the valley",
+   "jasmine",
+   "rose absolute",
+   "green notes"
+  ],
+  "corazon": [],
+  "fondo": [],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Miu-Miu/Miu-Miu-31468.html"
+ },
+ {
+  "fid": 53351,
+  "marca_slug": "mugler",
+  "nombre_slug": "angel-eau-croisi-re",
+  "marca": "Mugler",
+  "nombre": "Angel Eau Croisière",
+  "genero": "mujer",
+  "anio": 2019,
+  "acordes": [
+   "fruity",
+   "sweet",
+   "floral",
+   "vanilla"
+  ],
+  "salida": [
+   "mango",
+   "grapefruit"
+  ],
+  "corazon": [
+   "blackcurrant sorbet"
+  ],
+  "fondo": [
+   "patchouli",
+   "praline"
+  ],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Mugler/Angel-Eau-Croisiere-53351.html"
+ },
+ {
+  "fid": 60035,
+  "marca_slug": "paco-rabanne",
+  "nombre_slug": "1-million-parfum",
+  "marca": "Paco Rabanne",
+  "nombre": "1 Million Parfum",
+  "genero": "hombre",
+  "anio": 2020,
+  "acordes": [
+   "amber",
+   "warm spicy",
+   "leather",
+   "sweet"
+  ],
+  "salida": [],
+  "corazon": [
+   "monoi oil (tuberose)",
+   "leather",
+   "resins",
+   "labdanum",
+   "ambergris"
+  ],
+  "fondo": [],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Rabanne/1-Million-Parfum-60035.html"
+ },
+ {
+  "fid": 120953,
+  "marca_slug": "paco-rabanne",
+  "nombre_slug": "phantom-in-red",
+  "marca": "Paco Rabanne",
+  "nombre": "Phantom in Red",
+  "genero": "hombre",
+  "anio": 2025,
+  "acordes": [
+   "fruity",
+   "aromatic",
+   "woody",
+   "sweet"
+  ],
+  "salida": [],
+  "corazon": [
+   "benzoin",
+   "lavender",
+   "oud",
+   "saffron"
+  ],
+  "fondo": [],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Rabanne/Phantom-in-Red-120953.html"
+ },
+ {
+  "fid": 110661,
+  "marca_slug": "prada",
+  "nombre_slug": "paradigme",
+  "marca": "Prada",
+  "nombre": "Paradigme",
+  "genero": "hombre",
+  "anio": 2025,
+  "acordes": [
+   "amber",
+   "floral",
+   "woody",
+   "powdery"
+  ],
+  "salida": [],
+  "corazon": [],
+  "fondo": [
+   "coumarin",
+   "vanillin",
+   "musks"
+  ],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Prada/Paradigme-110661.html"
+ },
+ {
+  "fid": 101155,
+  "marca_slug": "carolina-herrera",
+  "nombre_slug": "very-good-girl-elixir",
+  "marca": "Carolina Herrera",
+  "nombre": "Very Good Girl Elixir",
+  "genero": "mujer",
+  "anio": 2024,
+  "acordes": [
+   "vanilla",
+   "sweet",
+   "floral",
+   "amber"
+  ],
+  "salida": [
+   "black cherry",
+   "bitter almond"
+  ],
+  "corazon": [
+   "rose",
+   "tuberose"
+  ],
+  "fondo": [
+   "vanilla",
+   "cocoa"
+  ],
+  "arabe": false,
+  "fuente": "https://www.fragrantica.com/perfume/Carolina-Herrera/Very-Good-Girl-Elixir-101155.html"
+ }
+]

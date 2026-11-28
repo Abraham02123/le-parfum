@@ -30,6 +30,16 @@ if (AQUI / 'todos.json.gz').exists():
     with gzip.open(AQUI / 'todos.json.gz', 'rt', encoding='utf-8') as fh:
         todos = {x['fid']: x for x in json.load(fh)}
 todos.update({x['fid']: x for x in sel})
+# Perfumes que NO están en la fuente de 24.063 (27-nov: el catálogo del dueño traía 19 más nuevos o que la fuente no
+# tiene, como Santal 33 o Yara Candy). extra.json: una fila por perfume, mismo formato que la fuente más «marca» y
+# «nombre» bien escritos; el id es el de Fragrantica, así la foto se baja sola igual que los demás. Se agregan a mano.
+if (AQUI / 'extra.json').exists():
+    for x in leer('extra.json'):
+        x = {'votos': 0, 'nota': None, 'arabe': False, 'anio': None, 'acordes': [], 'salida': [], 'corazon': [],
+             'fondo': [], **x}
+        if x['fid'] not in todos:
+            todos[x['fid']] = x
+            nombres.setdefault(str(x['fid']), {'marca': x['marca'], 'nombre': x['nombre']})
 
 # Correcciones del revisor (26-nov): términos de Latinoamérica y nombres de ingrediente sin traducir.
 es.update({'grapefruit': 'toronja', 'blood grapefruit': 'toronja sanguina', 'pink grapefruit': 'toronja rosa',
