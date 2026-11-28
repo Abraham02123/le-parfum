@@ -51,7 +51,7 @@ const cabeza = ({ titulo, desc, url, imagen, tipo, extra = '' }) => `<!doctype h
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='11' y='3' width='10' height='6' rx='1.5' fill='%234A2340'/%3E%3Crect x='6' y='10' width='20' height='19' rx='5' fill='%23B97A2B'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="../estilos.css">
   <link rel="stylesheet" href="pagina.css">
 ${extra}</head>
@@ -158,7 +158,7 @@ fs.writeFileSync(path.join(__dirname, '404.html'), `<!doctype html>
 <html lang="es-MX"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Esta página no existe | ${esc(C.nombre)}</title><meta name="robots" content="noindex">
 <script>var m = location.pathname.match(/[/]p[/]([0-9]+)[.]html$/); if (m) location.replace(${JSON.stringify(BASE)} + '#p=' + m[1]);</script>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@1,6..96,400&family=Jost:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#FBFAF8;color:#1E1A1D;font:400 17px/1.5 Jost,system-ui,sans-serif;text-align:center;padding:24px}
 h1{font:italic 400 44px/1.1 'Bodoni Moda',Georgia,serif;color:#4A2340;margin:0 0 12px}p{color:#6B6369;margin:0 0 26px}
 a{display:inline-block;background:#1E1A1D;color:#fff;text-decoration:none;padding:13px 24px;border-radius:6px}a:hover{background:#4A2340}</style></head>

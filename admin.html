@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Panel · Perfumes</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="admin.css?v=276bb70c">
   <style>
     .panel { max-width: 1200px; margin: 0 auto; padding: 24px 4vw 60px; }
@@ -128,7 +128,9 @@
   <div id="toast" class="toast" hidden></div>
 
   <script src="config.js?v=fdd3ccce"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 27-nov: la librería de la base en la nube solo se pide si está configurada. Antes se pedía siempre, sin usarse, y si el
+       celular no conseguía bajarla la tienda se quedaba EN BLANCO (comprobado imitando iPhone y Android). -->
+  <script>if (TIENDA_CONFIG.supabaseUrl && TIENDA_CONFIG.supabaseKey) document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');</script>
   <script src="logica.js?v=558aef5b"></script>
   <script src="demo-catalogo.js?v=35fc6577"></script>
   <script src="catalogo.js?v=be69c23d"></script>
