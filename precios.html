@@ -70,13 +70,12 @@
     <details class="clave" id="caja-clave">
       <summary id="titulo-clave">Clave para guardar</summary>
       <p>Para guardar hace falta tu clave de GitHub. Se crea una sola vez y se guarda solo en este teléfono; no se envía a nadie más que a GitHub.</p>
-      <p><a class="btn btn-borde" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear mi clave en GitHub</a></p>
+      <p><a class="btn btn-borde" href="https://github.com/settings/personal-access-tokens/new?name=precios+tienda&amp;description=Guardar+precios+desde+el+celular&amp;target_name=Abraham02123&amp;expires_in=none&amp;contents=write" target="_blank" rel="noopener">Crear mi clave en GitHub</a></p>
       <ol class="pasos-clave">
-        <li>Toca el botón de arriba (se abre GitHub; entra con la cuenta de la tienda si te lo pide).</li>
-        <li><b>Token name</b>: precios tienda. <b>Expiration</b>: la más larga (o «No expiration»).</li>
-        <li><b>Repository access</b> → <b>Only select repositories</b> → elige <b>le-parfum</b>.</li>
-        <li><b>Permissions</b> → <b>Contents</b> → <b>Read and write</b>. Nada más.</li>
-        <li><b>Generate token</b>, copia el texto que empieza con <code>github_pat_</code>, vuelve aquí y pégalo abajo.</li>
+        <li>Mantén apretado el botón de arriba y elige <b>Abrir en Chrome</b> (o en el navegador). La aplicación de GitHub no tiene esta pantalla. Entra con la cuenta <b>Abraham02123</b> si te lo pide.</li>
+        <li>El nombre, la duración y el permiso ya vienen puestos. Solo baja hasta <b>Repository access</b>, elige <b>Only select repositories</b> y en la lista marca <b>le-parfum</b>.</li>
+        <li>Toca <b>Generate token</b> al final (y otra vez si te pide confirmar).</li>
+        <li>Copia el texto que empieza con <code>github_pat_</code>, vuelve aquí, pégalo abajo y toca «Guardar en este teléfono». GitHub lo muestra una sola vez.</li>
       </ol>
       <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
       <div class="fila-btn">
