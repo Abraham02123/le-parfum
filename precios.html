@@ -18,6 +18,9 @@
     .clave summary { cursor: pointer; font-weight: 500; }
     .clave p { margin: 8px 0; font-size: 14px; color: var(--suave); }
     .clave input { width: 100%; padding: 12px; border: 1px solid var(--linea); border-radius: var(--r); background: var(--papel); margin: 6px 0 10px; }
+    .clave ol.pasos-clave { margin: 4px 0 12px; padding-left: 20px; font-size: 14px; color: var(--suave); }
+    .clave ol.pasos-clave li { margin: 4px 0; }
+    .clave a.btn { display: inline-block; text-decoration: none; }
     .clave .fila-btn { display: flex; gap: 10px; flex-wrap: wrap; }
     .estado-clave { font-size: 14px; margin: 0 0 14px; }
     .estado-clave.ok { color: var(--salvia); } .estado-clave.mal { color: var(--error); }
@@ -66,7 +69,15 @@
 
     <details class="clave" id="caja-clave">
       <summary id="titulo-clave">Clave para guardar</summary>
-      <p>Para guardar hace falta tu clave de GitHub (se crea una sola vez; los pasos están en GUIA_PASOS.md, «Cambiar precios desde el celular»). Se guarda solo en este teléfono, no se envía a nadie más que a GitHub.</p>
+      <p>Para guardar hace falta tu clave de GitHub. Se crea una sola vez y se guarda solo en este teléfono; no se envía a nadie más que a GitHub.</p>
+      <p><a class="btn btn-borde" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Crear mi clave en GitHub</a></p>
+      <ol class="pasos-clave">
+        <li>Toca el botón de arriba (se abre GitHub; entra con la cuenta de la tienda si te lo pide).</li>
+        <li><b>Token name</b>: precios tienda. <b>Expiration</b>: la más larga (o «No expiration»).</li>
+        <li><b>Repository access</b> → <b>Only select repositories</b> → elige <b>le-parfum</b>.</li>
+        <li><b>Permissions</b> → <b>Contents</b> → <b>Read and write</b>. Nada más.</li>
+        <li><b>Generate token</b>, copia el texto que empieza con <code>github_pat_</code>, vuelve aquí y pégalo abajo.</li>
+      </ol>
       <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
       <div class="fila-btn">
         <button class="btn btn-tinta" id="guardar-clave" type="button">Guardar en este teléfono</button>

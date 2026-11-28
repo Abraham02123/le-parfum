@@ -89,8 +89,11 @@ Hoy cada perfume tiene precio sin caja y con caja por escalones (750/850/950 y 1
 Ya no hace falta Google: la tienda trae su propia página para editar precios, **`precios.html`**.
 
 **Qué haces tú (una sola vez): crear tu clave de GitHub** — es como una llave que solo abre la tienda.
-1. En el celular, entra a **github.com** con tu cuenta (la de la tienda) → toca tu foto → **Settings**.
-2. Baja hasta **Developer settings** → **Personal access tokens** → **Fine-grained tokens** → **Generate new token**.
+1. En el celular abre en el **navegador** (Chrome o Safari, no la app de GitHub, que no tiene esta opción)
+   este enlace directo: **https://github.com/settings/personal-access-tokens/new** — si te pide, entra con tu
+   cuenta de la tienda (Abraham02123). Ese enlace salta el menú «Developer settings», que en el celular queda
+   escondido al final de Settings. También está como botón en precios.html → «Clave para guardar».
+2. Se abre directo la página **New fine-grained personal access token**.
 3. Nombre: `precios tienda`. Expiración: la más larga que te deje (o «No expiration»).
 4. **Repository access** → **Only select repositories** → elige **le-parfum**.
 5. **Permissions** → **Repository permissions** → **Contents** → **Read and write**. Nada más.
